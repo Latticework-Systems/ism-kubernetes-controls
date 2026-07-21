@@ -1,0 +1,17 @@
+# Test fixture only. The deployable ConfigMap lives in policy.yaml.
+# Mock ConfigMap for the check-approved-registry rule.
+# The policy reads this ConfigMap at admission time via context.configMap.
+# Including it in the kyverno-test.yaml resources list lets the CLI resolve
+# the context lookup without a live cluster.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ism-approved-registries
+  namespace: kyverno
+data:
+  registries: |
+    registry.internal/*
+    ghcr.io/your-org/*
+    docker.io/library/*
+    docker.io/your-org/*
+    your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*

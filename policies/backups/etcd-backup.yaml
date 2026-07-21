@@ -1,0 +1,91 @@
+# ISM — Control 8: etcd Backup (Self-Managed Clusters Only)
+#
+# For managed Kubernetes (EKS, AKS, GKE): etcd is backed up by the cloud
+# provider automatically. Verify this in your cloud console and document
+# the backup schedule and retention as an input to downstream assessment.
+#
+# For self-managed clusters: this CronJob provides a starting point for
+# daily etcd snapshots. You MUST customise:
+#   - The etcd endpoint URL and port
+#   - Certificate paths (or use --insecure-transport if internal-only)
+#   - The backup storage volume (hostPath below is a placeholder —
+#     use a PV or upload to remote object storage for ML2 compliance)
+#   - The image tag to match your etcd version
+#
+# IMPORTANT: etcd backups are the second backup surface alongside Velero.
+# See policy.yaml in this directory for PVC/namespace backup via Velero.
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ism-etcd-backup
+  namespace: kube-system
+  annotations:
+    ism.latticework.systems/control: "backups"
+    ism.latticework.systems/maturity: "ML2"
+    ism.latticework.systems/description: >-
+      Daily etcd snapshot for self-managed clusters. Managed K8s users
+      should document their provider's etcd backup instead.
+spec:
+  schedule: "0 1 * * *"   # 1am daily
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          # This job requires host-level access to etcd certs.
+          # On self-managed clusters, it typically runs on control plane nodes.
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+          restartPolicy: OnFailure
+          containers:
+          - name: etcd-snapshot
+            # Pin to your cluster's etcd version
+            image: registry.k8s.io/etcd:3.5.17-0
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+              BACKUP_FILE="/backup/etcd-snapshot-${TIMESTAMP}.db"
+
+              echo "=== ISM Control 8: etcd Backup ==="
+              echo "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+              etcdctl snapshot save "${BACKUP_FILE}" \
+                --endpoints=https://127.0.0.1:2379 \
+                --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                --cert=/etc/kubernetes/pki/etcd/server.crt \
+                --key=/etc/kubernetes/pki/etcd/server.key
+
+              etcdctl snapshot status "${BACKUP_FILE}" \
+                --write-out=table
+
+              echo "Snapshot saved: ${BACKUP_FILE}"
+
+              # Retention: keep 90 days of snapshots (ML2 minimum)
+              find /backup -name "etcd-snapshot-*.db" -mtime +90 -delete
+              echo "Cleaned snapshots older than 90 days"
+            volumeMounts:
+            - name: etcd-certs
+              mountPath: /etc/kubernetes/pki/etcd
+              readOnly: true
+            - name: backup-storage
+              mountPath: /backup
+          volumes:
+          - name: etcd-certs
+            hostPath:
+              path: /etc/kubernetes/pki/etcd
+              type: DirectoryOrCreate
+          - name: backup-storage
+            # CUSTOMISE: Replace with a PersistentVolumeClaim or upload
+            # to remote object storage for ML2 compliance (backups must
+            # be stored separately from the cluster).
+            hostPath:
+              path: /var/lib/etcd-backups
+              type: DirectoryOrCreate

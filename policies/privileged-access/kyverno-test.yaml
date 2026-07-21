@@ -1,0 +1,100 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-privileged-access
+policies:
+  - policy.yaml
+resources:
+  - fixtures/sa-default-before.yaml
+  - fixtures/pod-dedicated-sa-prod-pass.yaml
+  - fixtures/pod-default-sa-prod-fail.yaml
+  - fixtures/pod-default-sa-dev-skip.yaml
+  - fixtures/secret-opaque-pass.yaml
+  - fixtures/secret-legacy-token-fail.yaml
+  - fixtures/crb-breakglass-group-pass.yaml
+  - fixtures/crb-user-subject-fail.yaml
+  - fixtures/crb-sa-subject-fail.yaml
+  - fixtures/crb-group-wrong-name-fail.yaml
+  - fixtures/crb-system-prefix-skip.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+results:
+  # --- disable-automount-default-sa (mutate) ---
+  - kind: ServiceAccount
+    policy: ism-privileged-access-mutate-default-sa
+    rule: disable-automount-default-sa
+    resources:
+      - default
+    result: pass
+    patchedResources: fixtures/sa-default-after.yaml
+
+  # --- require-non-default-sa-in-production (validate) ---
+  - kind: Pod
+    policy: ism-privileged-access-require-dedicated-sa
+    rule: require-non-default-sa-in-production
+    resources:
+      - pod-dedicated-sa-prod-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-privileged-access-require-dedicated-sa
+    rule: require-non-default-sa-in-production
+    resources:
+      - pod-default-sa-prod-fail
+    result: fail
+
+  # development namespace — namespaceSelector misses, rule skips
+  - kind: Pod
+    policy: ism-privileged-access-require-dedicated-sa
+    rule: require-non-default-sa-in-production
+    resources:
+      - pod-default-sa-dev-skip
+    result: skip
+
+  # --- block-legacy-sa-token-secrets (validate) ---
+  - kind: Secret
+    policy: ism-privileged-access-block-legacy-sa-tokens
+    rule: block-legacy-sa-token-secrets
+    resources:
+      - secret-opaque-pass
+    result: pass
+
+  - kind: Secret
+    policy: ism-privileged-access-block-legacy-sa-tokens
+    rule: block-legacy-sa-token-secrets
+    resources:
+      - secret-legacy-token-fail
+    result: fail
+
+  # --- block-cluster-admin-to-non-breakglass-subjects (validate) ---
+  # Group 'break-glass' — only permitted subject
+  - kind: ClusterRoleBinding
+    policy: ism-privileged-access-block-cluster-admin-binding
+    rule: block-cluster-admin-to-non-breakglass-subjects
+    resources:
+      - breakglass-cluster-admin
+    result: pass
+
+  # User and ServiceAccount subjects — denied
+  - kind: ClusterRoleBinding
+    policy: ism-privileged-access-block-cluster-admin-binding
+    rule: block-cluster-admin-to-non-breakglass-subjects
+    resources:
+      - user-cluster-admin
+      - sa-cluster-admin
+      - engineers-cluster-admin
+    result: fail
+
+  # system:* — excluded by name pattern, skips
+  - kind: ClusterRoleBinding
+    policy: ism-privileged-access-block-cluster-admin-binding
+    rule: block-cluster-admin-to-non-breakglass-subjects
+    resources:
+      - system:test-bootstrap-binding
+    result: skip
+
+  # NOTE — break-glass userInfo exemption:
+  # The exclude.subjects block matches request.userInfo.groups (requesting user identity).
+  # The kyverno CLI test framework does not inject userInfo, so this path cannot
+  # be tested with kyverno test. Validate with:
+  #   kubectl auth can-i create clusterrolebindings --as-group=break-glass
+  # or kyverno apply --userinfo on a live cluster.

@@ -1,0 +1,563 @@
+schema_version: "1.0"
+ism_release: "2026-06"
+generated: false
+controls:
+  - ism_id: ISM-0445
+    title: Privileged users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access.
+    ism_topic: Guidelines for personnel security
+    applicability: platform
+    views:
+      e8:
+        strategy: restrict-admin-privileges
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks:
+      - engine: kyverno
+        policy: ism-privileged-access-mutate-default-sa
+        coverage: partial
+      - engine: kyverno
+        policy: ism-privileged-access-require-dedicated-sa
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show whether production workloads use dedicated service accounts;
+      they do not prove human privileged-account separation or account governance.
+
+  - ism_id: ISM-1182
+    title: Network access controls are implemented to limit the flow of network traffic within and between network segments to only that required for business purposes.
+    ism_topic: Guidelines for networking
+    applicability: platform
+    views:
+      e8: null
+      essentials:
+        chapter: null
+        principle: null
+    checks: &network_segmentation_checks
+      - engine: kubescape
+        rule_id: ism-network-policy-coverage
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0030
+            rule_name: ingress-and-egress-blocked
+          rationale: >-
+            The upstream rule establishes the Kubernetes network-policy pattern; the
+            local rule reports workloads not selected by both ingress and egress policy.
+    evidence_note: >-
+      Findings show whether Kubernetes workloads are selected by ingress and egress
+      NetworkPolicies; they do not prove that allowed flows match business need or
+      that the cluster network plugin enforces the policies.
+
+  - ism_id: ISM-1246
+    title: Server applications are hardened using ASD and vendor hardening guidance, with the most restrictive guidance taking precedence when conflicts occur.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8: null
+      essentials:
+        chapter: null
+        principle: null
+    checks: &workload_hardening_checks
+      - engine: kubescape
+        rule_id: ism-no-privileged-containers
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0057
+            rule_name: rule-privilege-escalation
+          rationale: >-
+            The local rule follows the upstream privileged and SYS_ADMIN checks and
+            adds standalone fixtures for regular and init containers.
+      - engine: kubescape
+        rule_id: ism-pod-security-standards
+        coverage: partial
+        provenance:
+          disposition: custom
+          rationale: >-
+            No single upstream control checks namespace Pod Security Admission or an
+            equivalent enforced Kyverno policy set.
+      - engine: kubescape
+        rule_id: ism-readonly-root-filesystem
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0017
+            rule_name: immutable-container-filesystem
+          rationale: >-
+            The upstream rule provides the default-deny field check; the local rule
+            also covers init containers and excludes Kubernetes system namespaces.
+      - engine: kubescape
+        rule_id: ism-non-root-containers
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0013
+            rule_name: non-root-containers
+          rationale: >-
+            The local rule retains the upstream non-root intent while evaluating pod
+            and container security contexts directly.
+      - engine: kubescape
+        rule_id: ism-no-privilege-escalation
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0016
+            rule_name: rule-allow-privilege-escalation
+          rationale: >-
+            The local rule applies the upstream explicit-false requirement to regular
+            and init containers.
+      - engine: kubescape
+        rule_id: ism-no-host-access
+        coverage: partial
+        provenance:
+          disposition: custom
+          rationale: >-
+            The rule combines host namespace, host port and hostPath checks that are
+            separate controls upstream, so no single upstream control is authoritative.
+      - engine: kubescape
+        rule_id: ism-drop-all-capabilities
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0046
+            rule_name: insecure-capabilities
+          rationale: >-
+            The local rule uses the upstream capability model but requires every
+            regular and init container to drop ALL capabilities.
+      - engine: kubescape
+        rule_id: ism-seccomp-profile
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0055
+            rule_name: linux-hardening
+          rationale: >-
+            The local rule extracts the seccomp portion of the upstream Linux
+            hardening control and checks pod and container security contexts.
+      - engine: kyverno
+        policy: ism-workload-hardening-security-context
+        coverage: partial
+      - engine: kyverno
+        policy: ism-workload-hardening-block-host-namespaces
+        coverage: partial
+      - engine: kyverno
+        policy: ism-workload-hardening-block-host-path
+        coverage: partial
+      - engine: kyverno
+        policy: ism-workload-hardening-require-read-only-rootfs
+        coverage: partial
+    evidence_note: >-
+      Findings show selected Kubernetes workload hardening settings; they do not prove
+      that all ASD and vendor guidance was identified, reconciled or implemented.
+
+  - ism_id: ISM-1416
+    title: A software firewall is implemented on workstations and servers to restrict inbound and outbound network connections to an organisation-approved set of applications and services.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8: null
+      essentials:
+        chapter: null
+        principle: null
+    checks: *network_segmentation_checks
+    evidence_note: >-
+      NetworkPolicy coverage is evidence of workload-level traffic restriction only;
+      it does not prove host firewall coverage, approved application and service lists,
+      or effective enforcement by the cluster network plugin.
+
+  - ism_id: ISM-1490
+    title: Application control is implemented on internet-facing servers.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8:
+        strategy: application-control
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: &application_control_checks
+      - engine: kubescape
+        rule_id: ism-allowed-registries
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0078
+            rule_name: container-image-repository-v1
+          rationale: >-
+            The upstream rule provides the base allow-list behaviour; the local
+            implementation also accepts the public Kyverno registry ConfigMap.
+      - engine: kubescape
+        rule_id: ism-no-privileged-containers
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0057
+            rule_name: rule-privilege-escalation
+          rationale: >-
+            The local rule follows the upstream privileged and SYS_ADMIN semantics
+            while remaining a standalone implementation with explicit local fixtures.
+      - engine: kubescape
+        rule_id: ism-pod-security-standards
+        coverage: partial
+        provenance:
+          disposition: custom
+          rationale: >-
+            No single upstream control checks namespace Pod Security Admission or
+            an equivalent enforced Kyverno policy set.
+      - engine: kyverno
+        policy: ism-application-control-approved-registry
+        coverage: partial
+      - engine: kyverno
+        policy: ism-application-control-no-latest-tag
+        coverage: partial
+      - engine: kyverno
+        policy: ism-application-control-no-privileged
+        coverage: partial
+    evidence_note: >-
+      Scan and PolicyReport results show workload image and execution guardrails on
+      Kubernetes servers; they do not prove host or endpoint application control.
+
+  - ism_id: ISM-1501
+    title: Operating systems that are no longer supported by vendors are replaced.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-operating-systems
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: &os_patch_checks
+      - engine: kyverno
+        policy: ism-patch-operating-systems-block-eol-base-images
+        coverage: partial
+      - engine: kyverno
+        policy: ism-patch-operating-systems-require-base-image-label
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show declared container base-image support state; they do not
+      prove Kubernetes node operating systems are supported or patched.
+
+  - ism_id: ISM-1511
+    title: Backups of data, applications and settings are performed and retained in accordance with business criticality and business continuity requirements.
+    ism_topic: Guidelines for system management
+    applicability: platform
+    views:
+      e8:
+        strategy: regular-backups
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks:
+      - engine: kyverno
+        policy: ism-backups-require-pvc-backup-label
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show whether production PVCs declare backup coverage; they do
+      not prove backup completion, retention, resilience or restorability.
+
+  - ism_id: ISM-1604
+    title: When using a software-based isolation mechanism that consumes shared physical computing resources, the configuration of the isolation mechanism is hardened by removing unneeded functionality and restricting access to the administrative interface used to manage the isolation mechanism.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8: null
+      essentials:
+        chapter: null
+        principle: null
+    checks: *workload_hardening_checks
+    evidence_note: >-
+      Findings show selected container isolation and workload hardening settings; they
+      do not assess the Kubernetes control plane, node runtime configuration or every
+      administrative interface used to manage the isolation mechanism.
+
+  - ism_id: ISM-1657
+    title: Application control restricts the execution of executables, libraries, scripts, installers, compiled HTML, HTML applications and control panel applets to an organisation-approved set.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8:
+        strategy: application-control
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *application_control_checks
+    evidence_note: >-
+      Approved-image and workload-execution findings evidence the Kubernetes
+      translation of application control; they do not inspect binaries inside images.
+
+  - ism_id: ISM-1685
+    title: Credentials for break glass accounts, local administrator accounts and service accounts are long, unique, unpredictable and managed.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8:
+        strategy: restrict-admin-privileges
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks:
+      - engine: kyverno
+        policy: ism-privileged-access-block-legacy-sa-tokens
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show legacy long-lived service-account token Secrets; they do
+      not assess external secret stores, break-glass credentials or rotation.
+
+  - ism_id: ISM-1690
+    title: Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: &application_patch_age_checks
+      - engine: kyverno
+        policy: ism-patch-applications-image-age-gate
+        coverage: partial
+      - engine: kyverno
+        policy: ism-patch-applications-require-build-date
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show declared image build age at admission; they do not prove
+      the image includes every applicable vendor patch.
+
+  - ism_id: ISM-1693
+    title: Patches, updates or other vendor mitigations for vulnerabilities in applications other than office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products are applied within one month of release.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *application_patch_age_checks
+    evidence_note: >-
+      PolicyReports show declared image build age at admission; they do not prove
+      dependency-level remediation or the vendor release date.
+
+  - ism_id: ISM-1694
+    title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-operating-systems
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *os_patch_checks
+    evidence_note: >-
+      PolicyReports show declared container base-image support metadata; they do not
+      prove patch timing for node operating systems or network devices.
+
+  - ism_id: ISM-1695
+    title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of workstations, non-internet-facing servers and non-internet-facing network devices are applied within one month of release.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-operating-systems
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *os_patch_checks
+    evidence_note: >-
+      PolicyReports show declared container base-image support metadata; they do not
+      prove patch timing for node operating systems, workstations or network devices.
+
+  - ism_id: ISM-1698
+    title: A vulnerability scanner is used at least daily to identify missing patches or updates for vulnerabilities in online services.
+    ism_topic: Guidelines for security assurance
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: &application_scan_checks
+      - engine: kyverno
+        policy: ism-patch-applications-require-scan-passed
+        coverage: partial
+    evidence_note: >-
+      PolicyReports show a declared successful image scan at admission; they do not
+      prove scanner cadence, coverage or current vulnerability data.
+
+  - ism_id: ISM-1700
+    title: A vulnerability scanner is used at least fortnightly to identify missing patches or updates for vulnerabilities in applications other than office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products.
+    ism_topic: Guidelines for security assurance
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *application_scan_checks
+    evidence_note: >-
+      PolicyReports show a declared successful image scan at admission; they do not
+      prove fortnightly cadence or dependency-level scan coverage.
+
+  - ism_id: ISM-1808
+    title: A vulnerability scanner with an up-to-date vulnerability database is used for vulnerability scanning activities.
+    ism_topic: Guidelines for security assurance
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *application_scan_checks
+    evidence_note: >-
+      PolicyReports show only the workload's declared scan result; scanner identity,
+      database freshness and scan configuration require pipeline evidence.
+
+  - ism_id: ISM-1871
+    title: Application control is applied to all locations other than user profiles and temporary folders used by operating systems, web browsers and email clients.
+    ism_topic: Guidelines for system hardening
+    applicability: platform
+    views:
+      e8:
+        strategy: application-control
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *application_control_checks
+    evidence_note: >-
+      Cluster-wide workload findings show whether the Kubernetes translation is
+      applied across scanned namespaces; they do not assess host filesystem locations.
+
+  - ism_id: ISM-1876
+    title: Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-applications
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks:
+      - engine: kyverno
+        policy: ism-patch-applications-image-age-gate
+        coverage: partial
+    evidence_note: >-
+      Admission-time image age is supporting evidence only; criticality, exploit
+      status and the 48-hour remediation clock require vulnerability pipeline data.
+
+  - ism_id: ISM-1877
+    title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.
+    ism_topic: Guidelines for system management
+    applicability: pipeline
+    views:
+      e8:
+        strategy: patch-operating-systems
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks: *os_patch_checks
+    evidence_note: >-
+      Container base-image support metadata is supporting evidence only; criticality,
+      exploit status and node or network-device patch timing remain external.
+
+  - ism_id: ISM-1883
+    title: Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users and services to undertake their duties.
+    ism_topic: Guidelines for personnel security
+    applicability: platform
+    views:
+      e8:
+        strategy: restrict-admin-privileges
+        maturity: [ML2]
+      essentials:
+        chapter: null
+        principle: null
+    checks:
+      - engine: kubescape
+        rule_id: ism-minimise-clusterrolebindings
+        coverage: partial
+        provenance:
+          disposition: custom
+          rationale: >-
+            Upstream administrative-role controls identify cluster-admin-equivalent
+            access, not every non-system cluster-wide service-account binding.
+      - engine: kubescape
+        rule_id: ism-no-cluster-admin-binding
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0185
+            rule_name: cluster-admin-role
+          rationale: >-
+            The upstream aggregated rule covers all bound subjects; the standalone
+            local rule applies the same subject scope directly to RBAC bindings.
+      - engine: kubescape
+        rule_id: ism-no-wildcard-permissions
+        coverage: partial
+        provenance:
+          disposition: custom
+          rationale: >-
+            Kubescape control C-0187 currently points to a cluster-admin enumeration
+            rule rather than a rule dedicated to wildcard RBAC fields.
+      - engine: kyverno
+        policy: ism-privileged-access-block-cluster-admin-binding
+        coverage: partial
+      - engine: kyverno
+        policy: ism-privileged-access-require-dedicated-sa
+        coverage: partial
+    evidence_note: >-
+      RBAC and service-account findings show Kubernetes privilege breadth; they do
+      not prove authorisation workflow, human account lifecycle or external systems.
+
+unmapped: []

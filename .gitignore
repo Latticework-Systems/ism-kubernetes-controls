@@ -1,0 +1,14 @@
+.DS_Store
+*.swp
+*.log
+.env
+.env.*
+evidence/
+.tools/
+.claude/
+tmp/
+dist/
+*.kubeconfig
+talosconfig*
+__pycache__/
+*.pyc

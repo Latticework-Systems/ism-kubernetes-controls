@@ -1,0 +1,13 @@
+# Passes both rules: annotation exists (require-base-image-label) and
+# declared base image is not EOL (block-eol-declared-base-image).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-with-base-image-annotation-pass
+  namespace: production
+  annotations:
+    ism.latticework.systems/base-image: "ubuntu:22.04"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

@@ -1,0 +1,9 @@
+# The root kustomization applies the first-wave policies in Audit mode.
+# This patch removes the default-service-account mutation policy from that
+# first wave so the initial rollout observes findings without changing
+# workload manifests.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-privileged-access-mutate-default-sa
+$patch: delete

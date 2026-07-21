@@ -1,0 +1,9 @@
+# Expected patchedResource after disable-automount-default-sa mutation.
+# automountServiceAccountToken must be set to false.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: default
+  creationTimestamp: null
+automountServiceAccountToken: false

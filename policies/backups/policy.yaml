@@ -1,0 +1,390 @@
+# ISM backup evidence
+# PVC backup labelling, Velero schedule configuration,
+# and monthly restoration test CronJob.
+# Assessors will still expect external evidence for backup access,
+# modification, deletion, and storage-separation controls.
+#
+# etcd backups:
+#   For managed Kubernetes (EKS, AKS, GKE): etcd is managed by the cloud
+#   provider — verify backup is enabled in your cloud console and document it.
+#   For self-managed clusters: see etcd-backup.yaml in this directory for a
+#   reference CronJob.
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-backups-require-pvc-backup-label
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1511"]'
+    policies.kyverno.io/title: "ISM — Regular Backups: Require PVC Backup Label"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      ML2 Control 8: All PersistentVolumeClaims in production must carry a backup
+      classification label so backup tooling can target the correct volumes.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-backup-label-on-pvc
+      match:
+        any:
+        - resources:
+            kinds: [PersistentVolumeClaim]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production, staging]
+      validate:
+        message: >-
+          PVCs in production must carry label 'ism.latticework.systems/backup-required'
+          set to 'true' or 'false'. Unlabelled PVCs may be omitted from backup
+          schedules silently. Supports ISM-1511.
+        anyPattern:
+        - metadata:
+            labels:
+              ism.latticework.systems/backup-required: "true"
+        - metadata:
+            labels:
+              ism.latticework.systems/backup-required: "false"
+---
+# Velero Schedule 1: Namespace resources (Deployments, Secrets, ConfigMaps, etc.)
+# Backs up ALL resources in production namespaces — no label filter.
+# Requires Velero: https://velero.io/docs/
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: ism-daily-backup-namespace-resources
+  namespace: velero
+  annotations:
+    ism.latticework.systems/control: "backups"
+    ism.latticework.systems/maturity: "ML2"
+    ism.latticework.systems/retention: "90-days"
+    ism.latticework.systems/scope: "namespace-resources"
+spec:
+  schedule: "0 2 * * *"
+  template:
+    # REQUIRED: Replace with the explicit list of namespaces in scope for
+    # your ML2 workload. Explicit scoping is the safe default — it prevents
+    # dev/test or other-tenant state leaking into production backup evidence.
+    includedNamespaces:
+      - production
+      - staging
+      # - add-further-namespaces-here
+    excludedNamespaces: [kube-system, kyverno, cert-manager]
+    # Set to true only when this is a dedicated single-environment cluster
+    # and you need cluster-scoped resources (CRDs, ClusterRoles, etc.) in
+    # the backup. WARNING: this pulls every cluster-scoped object into the
+    # backup set — do not enable on shared or multi-tenant clusters.
+    includeClusterResources: false
+    storageLocation: default
+    snapshotVolumes: false   # Volume snapshots handled by second schedule
+    ttl: 2160h   # 90 days = 2160 hours
+  # Advanced — dedicated production cluster with cluster-scoped resources:
+  # Uncomment and replace the template above ONLY when ALL of the following hold:
+  #   1. This cluster runs production workloads exclusively (no dev/test namespaces)
+  #   2. You require cluster-scoped resources (CRDs, ClusterRoles) in the backup
+  #   3. You have reviewed retention and blast-radius implications
+  # template:
+  #   includedNamespaces: ["*"]
+  #   excludedNamespaces: [kube-system, kyverno, cert-manager]
+  #   includeClusterResources: true
+  #   storageLocation: default
+  #   snapshotVolumes: false
+  #   ttl: 2160h
+---
+# Velero Schedule 2: PersistentVolume snapshots for labelled PVCs
+# Only snapshots volumes attached to PVCs with backup-required=true.
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: ism-daily-backup-pv-snapshots
+  namespace: velero
+  annotations:
+    ism.latticework.systems/control: "backups"
+    ism.latticework.systems/maturity: "ML2"
+    ism.latticework.systems/retention: "90-days"
+    ism.latticework.systems/scope: "pv-snapshots"
+spec:
+  schedule: "0 3 * * *"     # Offset by 1hr from namespace resource backup
+  template:
+    # REQUIRED: Must match the namespace list in Schedule 1 above.
+    includedNamespaces:
+      - production
+      - staging
+      # - add-further-namespaces-here
+    excludedNamespaces: [kube-system, kyverno, cert-manager]
+    includeClusterResources: false
+    storageLocation: default
+    volumeSnapshotLocations: [default]
+    ttl: 2160h   # 90 days = 2160 hours
+    labelSelector:
+      matchLabels:
+        ism.latticework.systems/backup-required: "true"
+---
+# Monthly restoration test — actually performs a Velero restore and
+# verifies recovered resources against the source namespaces.
+#
+# Customisation:
+#   Build and push the supplied restore-test image in
+#   policies/backups/restore-test-image/ before applying this CronJob.
+#   The image must contain kubectl, velero CLI, and jq.
+#   Set ISM_TEST_NAMESPACES to the namespaces you want to test restoration for.
+#   The script restores each namespace into an isolated copy prefixed with
+#   "ism-rtest-", restores both namespace resources and PVC snapshot backups,
+#   compares live vs restored counts, and cleans up afterwards. Full evidence
+#   is emitted to stdout (capture via your logging pipeline — Loki, CloudWatch, etc.).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ism-backup-restoration-test
+  namespace: velero
+  annotations:
+    ism.latticework.systems/control: "backups"
+    ism.latticework.systems/maturity: "ML2"
+    ism.latticework.systems/description: "Monthly backup restoration test — generates ML2 evidence"
+spec:
+  schedule: "0 3 1 * *"   # 3am on 1st of each month
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: velero
+          restartPolicy: OnFailure
+          containers:
+          - name: restore-test
+            # Build and push the supplied restore-test image before use.
+            # See policies/backups/restore-test-image/Dockerfile.
+            image: ghcr.io/your-org/ism-restore-test:v1.13.0
+            env:
+            # Customise: comma-separated list of namespaces to test
+            - name: ISM_TEST_NAMESPACES
+              value: "production,staging"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+              OVERALL_RESULT="PASS"
+
+              echo "=============================================="
+              echo "ISM Control 8: Monthly Backup Restoration Test"
+              echo "Timestamp: ${TIMESTAMP}"
+              echo "Namespaces: ${ISM_TEST_NAMESPACES}"
+              echo "=============================================="
+              echo ""
+
+              # Select the most recent completed namespace-resource backup.
+              RESOURCE_BACKUP=$(velero backup get --output json | \
+                jq -r '[.items[] | select(.status.phase=="Completed") | select(.metadata.labels["velero.io/schedule-name"]=="ism-daily-backup-namespace-resources")] | sort_by(.metadata.creationTimestamp) | last | .metadata.name')
+
+              if [ -z "${RESOURCE_BACKUP}" ] || [ "${RESOURCE_BACKUP}" = "null" ]; then
+                echo "FAIL: No completed namespace-resource backups found — cannot produce ML2 evidence"
+                exit 1
+              fi
+
+              # Locate the PV snapshot backup that is temporally closest to the
+              # selected namespace-resource backup, within a ±4-hour window anchored
+              # to the resource backup's creation timestamp.
+              #
+              # Using a timestamp window (not a calendar date) prevents:
+              #   - same-day reruns pairing a later PV backup with an earlier resource backup
+              #   - midnight skew if one schedule runs just before/after 00:00
+              # The two schedules run at 02:00 and 03:00 (1hr apart). A 4-hour window
+              # is generous for delays while still ruling out unrelated backup sets.
+              RESOURCE_TS=$(velero backup get "${RESOURCE_BACKUP}" --output json | \
+                jq -r '.metadata.creationTimestamp')
+
+              # Convert ISO-8601 timestamp to epoch seconds (GNU date; adapt for BSD date
+              # on macOS: date -j -f "%Y-%m-%dT%H:%M:%SZ" "${RESOURCE_TS}" +%s)
+              RESOURCE_EPOCH=$(date -d "${RESOURCE_TS}" +%s)
+              WINDOW_LOW=$((RESOURCE_EPOCH - 14400))
+              WINDOW_HIGH=$((RESOURCE_EPOCH + 14400))
+
+              PV_BACKUP=$(velero backup get --output json | \
+                jq -r --argjson low "${WINDOW_LOW}" --argjson high "${WINDOW_HIGH}" \
+                '[.items[] |
+                  select(.status.phase=="Completed") |
+                  select(.metadata.labels["velero.io/schedule-name"]=="ism-daily-backup-pv-snapshots") |
+                  select((.metadata.creationTimestamp | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) >= $low) |
+                  select((.metadata.creationTimestamp | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) <= $high)
+                ] | sort_by(.metadata.creationTimestamp) | last | .metadata.name')
+
+              echo "Namespace-resource backup under test: ${RESOURCE_BACKUP}"
+              echo "  Created: ${RESOURCE_TS}"
+              echo "PV snapshot backup under test: ${PV_BACKUP:-none within ±4h window}"
+              echo ""
+
+              IFS=',' ; for NS in ${ISM_TEST_NAMESPACES}; do
+                RESTORE_NS="ism-rtest-${NS}"
+                RESOURCE_RESTORE_NAME="ism-rtest-res-${NS}-$(date +%s)"
+                PV_RESTORE_NAME="ism-rtest-pv-${NS}-$(date +%s)"
+                NS_RESULT="PASS"
+
+                echo "--- Testing namespace: ${NS} ---"
+
+                # Create the isolated test namespace
+                kubectl create namespace "${RESTORE_NS}" 2>/dev/null || true
+                kubectl label namespace "${RESTORE_NS}" ism.latticework.systems/restore-test=true --overwrite
+
+                # Perform the restore into the test namespace
+                echo "  Restoring namespace resources for ${NS} from backup ${RESOURCE_BACKUP} into ${RESTORE_NS}..."
+                velero restore create "${RESOURCE_RESTORE_NAME}" \
+                  --from-backup "${RESOURCE_BACKUP}" \
+                  --include-namespaces "${NS}" \
+                  --namespace-mappings "${NS}:${RESTORE_NS}" \
+                  --wait
+
+                # Check namespace-resource restore status
+                RESTORE_STATUS=$(velero restore get "${RESOURCE_RESTORE_NAME}" --output json | jq -r '.status.phase')
+                echo "  Namespace-resource restore status: ${RESTORE_STATUS}"
+
+                if [ "${RESTORE_STATUS}" != "Completed" ]; then
+                  echo "  FAIL: Namespace-resource restore did not complete successfully"
+                  NS_RESULT="FAIL"
+                  OVERALL_RESULT="FAIL"
+                else
+                  LIVE_PVCS=$(kubectl get pvc -n "${NS}" --no-headers 2>/dev/null | wc -l)
+                  echo "  Live PVCs in ${NS}: ${LIVE_PVCS}"
+
+                  if [ "${LIVE_PVCS}" -gt 0 ]; then
+                    if [ -z "${PV_BACKUP}" ] || [ "${PV_BACKUP}" = "null" ]; then
+                      echo "  FAIL: Namespace has PVCs but no completed PV snapshot backup was found"
+                      NS_RESULT="FAIL"
+                      OVERALL_RESULT="FAIL"
+                    else
+                      echo "  Restoring PVC snapshots for ${NS} from backup ${PV_BACKUP} into ${RESTORE_NS}..."
+                      velero restore create "${PV_RESTORE_NAME}" \
+                        --from-backup "${PV_BACKUP}" \
+                        --include-namespaces "${NS}" \
+                        --namespace-mappings "${NS}:${RESTORE_NS}" \
+                        --wait
+
+                      PV_RESTORE_STATUS=$(velero restore get "${PV_RESTORE_NAME}" --output json | jq -r '.status.phase')
+                      echo "  PV snapshot restore status: ${PV_RESTORE_STATUS}"
+
+                      if [ "${PV_RESTORE_STATUS}" != "Completed" ]; then
+                        echo "  FAIL: PVC snapshot restore did not complete successfully"
+                        NS_RESULT="FAIL"
+                        OVERALL_RESULT="FAIL"
+                      fi
+                    fi
+                  fi
+
+                  # Compare resource counts between source and restored namespace.
+                  LIVE_RESOURCES=$(kubectl get all -n "${NS}" --no-headers 2>/dev/null | wc -l)
+                  RESTORED_RESOURCES=$(kubectl get all -n "${RESTORE_NS}" --no-headers 2>/dev/null | wc -l)
+                  echo "  Live resources in ${NS}: ${LIVE_RESOURCES}"
+                  echo "  Restored resources in ${RESTORE_NS}: ${RESTORED_RESOURCES}"
+
+                  LIVE_SECRETS=$(kubectl get secrets -n "${NS}" --no-headers 2>/dev/null | wc -l)
+                  RESTORED_SECRETS=$(kubectl get secrets -n "${RESTORE_NS}" --no-headers 2>/dev/null | wc -l)
+                  echo "  Live secrets: ${LIVE_SECRETS}, Restored secrets: ${RESTORED_SECRETS}"
+
+                  LIVE_CMS=$(kubectl get configmaps -n "${NS}" --no-headers 2>/dev/null | wc -l)
+                  RESTORED_CMS=$(kubectl get configmaps -n "${RESTORE_NS}" --no-headers 2>/dev/null | wc -l)
+                  echo "  Live configmaps: ${LIVE_CMS}, Restored configmaps: ${RESTORED_CMS}"
+
+                  RESTORED_PVCS=$(kubectl get pvc -n "${RESTORE_NS}" --no-headers 2>/dev/null | wc -l)
+                  echo "  Restored PVCs: ${RESTORED_PVCS}"
+
+                  # Validate PVC health: all restored PVCs must reach Bound state.
+                  if [ "${RESTORED_PVCS}" -gt 0 ]; then
+                    echo "  Waiting up to 120s for restored PVCs to reach Bound state..."
+                    UNBOUND=$(kubectl get pvc -n "${RESTORE_NS}" --no-headers 2>/dev/null | grep -vc " Bound " || true)
+                    WAIT=0
+                    while [ "${UNBOUND}" -gt 0 ] && [ "${WAIT}" -lt 24 ]; do
+                      sleep 5; WAIT=$((WAIT+1))
+                      UNBOUND=$(kubectl get pvc -n "${RESTORE_NS}" --no-headers 2>/dev/null | grep -vc " Bound " || true)
+                    done
+                    if [ "${UNBOUND}" -gt 0 ]; then
+                      echo "  FAIL: ${UNBOUND} restored PVC(s) did not reach Bound state within 120s"
+                      NS_RESULT="FAIL"
+                      OVERALL_RESULT="FAIL"
+                    else
+                      echo "  All restored PVCs are Bound"
+                    fi
+                  fi
+
+                  # Validate pod health: restored pods must reach Running state within 3 minutes.
+                  TOTAL_PODS=$(kubectl get pods -n "${RESTORE_NS}" --no-headers 2>/dev/null | wc -l)
+                  if [ "${TOTAL_PODS}" -gt 0 ]; then
+                    echo "  Waiting up to 180s for restored pods to become Running..."
+                    NOT_RUNNING=1
+                    WAIT=0
+                    while [ "${NOT_RUNNING}" -gt 0 ] && [ "${WAIT}" -lt 36 ]; do
+                      sleep 5; WAIT=$((WAIT+1))
+                      NOT_RUNNING=$(kubectl get pods -n "${RESTORE_NS}" --no-headers 2>/dev/null | grep -vc "Running\|Completed" || true)
+                    done
+                    RUNNING_PODS=$(kubectl get pods -n "${RESTORE_NS}" --no-headers 2>/dev/null | grep -c "Running" || true)
+                    echo "  Pods Running: ${RUNNING_PODS}/${TOTAL_PODS}"
+                    if [ "${NOT_RUNNING}" -gt 0 ]; then
+                      echo "  FAIL: ${NOT_RUNNING} pod(s) did not reach Running state within 180s"
+                      NS_RESULT="FAIL"
+                      OVERALL_RESULT="FAIL"
+                    else
+                      echo "  All restored pods are Running"
+                    fi
+                  fi
+
+                  if [ "${RESTORED_RESOURCES}" -eq 0 ]; then
+                    echo "  FAIL: No workload resources restored"
+                    NS_RESULT="FAIL"
+                    OVERALL_RESULT="FAIL"
+                  fi
+
+                  if [ "${RESTORED_RESOURCES}" -lt "${LIVE_RESOURCES}" ]; then
+                    echo "  FAIL: Partial workload restore (${RESTORED_RESOURCES}/${LIVE_RESOURCES})"
+                    NS_RESULT="FAIL"
+                    OVERALL_RESULT="FAIL"
+                  fi
+
+                  if [ "${RESTORED_SECRETS}" -lt "${LIVE_SECRETS}" ]; then
+                    echo "  FAIL: Partial Secret restore (${RESTORED_SECRETS}/${LIVE_SECRETS})"
+                    NS_RESULT="FAIL"
+                    OVERALL_RESULT="FAIL"
+                  fi
+
+                  if [ "${RESTORED_CMS}" -lt "${LIVE_CMS}" ]; then
+                    echo "  FAIL: Partial ConfigMap restore (${RESTORED_CMS}/${LIVE_CMS})"
+                    NS_RESULT="FAIL"
+                    OVERALL_RESULT="FAIL"
+                  fi
+
+                  if [ "${RESTORED_PVCS}" -lt "${LIVE_PVCS}" ]; then
+                    echo "  FAIL: Partial PVC restore (${RESTORED_PVCS}/${LIVE_PVCS})"
+                    NS_RESULT="FAIL"
+                    OVERALL_RESULT="FAIL"
+                  fi
+                fi
+
+                # Clean up
+                echo "  Cleaning up ${RESTORE_NS}..."
+                kubectl delete namespace "${RESTORE_NS}" --wait=false 2>/dev/null || true
+                velero restore delete "${RESOURCE_RESTORE_NAME}" --confirm 2>/dev/null || true
+                velero restore delete "${PV_RESTORE_NAME}" --confirm 2>/dev/null || true
+
+                echo "  Namespace ${NS} result: ${NS_RESULT}"
+                echo ""
+              done
+
+              echo "=============================================="
+              echo "EVIDENCE RECORD"
+              echo "=============================================="
+              echo "  Test date:          ${TIMESTAMP}"
+              echo "  Resource backup:    ${RESOURCE_BACKUP}"
+              echo "  Resource backup ts: ${RESOURCE_TS}"
+              echo "  PV backup:          ${PV_BACKUP:-none within ±4h window}"
+              echo "  Namespaces:      ${ISM_TEST_NAMESPACES}"
+              echo "  Overall result:  ${OVERALL_RESULT}"
+              echo ""
+              echo "This output serves as ISM Control 8 restoration"
+              echo "test evidence. Retain in your logging pipeline."
+              echo "=============================================="
+
+              if [ "${OVERALL_RESULT}" = "FAIL" ]; then
+                exit 1
+              fi

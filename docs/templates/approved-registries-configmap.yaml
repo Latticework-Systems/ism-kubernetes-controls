@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ism-approved-registries
+  namespace: kyverno
+data:
+  registries: |
+    docker.io/library/*
+    ghcr.io/YOUR_ORG/*
+    registry.example.com/YOUR_TEAM/*

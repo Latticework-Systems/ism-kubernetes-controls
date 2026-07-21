@@ -1,0 +1,16 @@
+# Fails require-scan-passed — label value is "failed", not "passed".
+# A CI pipeline that ran a scan with findings would set this value.
+# The policy must block it even though the label exists.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-scan-failed-value-fail
+  namespace: production
+  labels:
+    ism.latticework.systems/scan-status: "failed"
+  annotations:
+    ism.latticework.systems/image-built: "9999-12-31T00:00:00Z"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

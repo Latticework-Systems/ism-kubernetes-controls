@@ -1,0 +1,8 @@
+# Input resource for disable-automount-default-sa mutation test.
+# The 'default' ServiceAccount has no automountServiceAccountToken field set.
+# The mutation rule should patch it to false.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+  namespace: default

@@ -1,0 +1,11 @@
+# Passes require-non-default-sa-in-production — uses a dedicated ServiceAccount.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-dedicated-sa-prod-pass
+  namespace: production
+spec:
+  serviceAccountName: myapp-sa
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0

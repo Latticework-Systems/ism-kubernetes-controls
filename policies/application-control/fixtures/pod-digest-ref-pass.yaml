@@ -1,0 +1,12 @@
+# Passes check-no-explicit-latest-tag and check-no-implicit-latest-tag.
+# A digest reference has no tag; the '@' character is present so the implicit-latest
+# check does not fire. Also passes check-approved-registry (registry.internal/*).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-digest-ref-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855

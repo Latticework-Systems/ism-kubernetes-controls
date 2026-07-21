@@ -1,0 +1,12 @@
+# Fails require-non-default-sa-in-production — explicitly uses the default SA.
+# Production Pods must not use the default ServiceAccount.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-default-sa-prod-fail
+  namespace: production
+spec:
+  serviceAccountName: default
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0

@@ -1,0 +1,11 @@
+# Fails check-no-explicit-latest-tag — image uses ':latest' tag in a production namespace.
+# The approved registry prefix matches, but the tag is not permitted.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-latest-explicit-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp:latest

@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latticework.systems/schema/ism-mapping-1.0.json",
+  "title": "Latticework ISM check mapping",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ism_release", "generated", "controls", "unmapped"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "ism_release": {"type": "string", "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"},
+    "generated": {"const": false},
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/control"}
+    },
+    "unmapped": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/unmapped"}
+    }
+  },
+  "$defs": {
+    "checkIdentity": {
+      "oneOf": [
+        {
+          "properties": {"engine": {"const": "kubescape"}, "rule_id": {"type": "string", "minLength": 1}},
+          "required": ["engine", "rule_id"]
+        },
+        {
+          "properties": {"engine": {"const": "kyverno"}, "policy": {"type": "string", "minLength": 1}},
+          "required": ["engine", "policy"]
+        }
+      ]
+    },
+    "check": {
+      "allOf": [
+        {"$ref": "#/$defs/checkIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "engine": {"enum": ["kubescape", "kyverno"]},
+            "rule_id": {"type": "string"},
+            "policy": {"type": "string"},
+            "coverage": {"enum": ["partial", "full"]},
+            "provenance": {"$ref": "#/$defs/provenance"}
+          },
+          "required": ["coverage"]
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "rationale"],
+      "properties": {
+        "disposition": {"enum": ["adapt", "custom"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "upstream": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "ref", "control_id", "rule_name"],
+          "properties": {
+            "repository": {"type": "string", "format": "uri"},
+            "ref": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "control_id": {"type": "string", "pattern": "^C-[0-9]{4}$"},
+            "rule_name": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "views": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["e8", "essentials"],
+      "properties": {
+        "e8": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["strategy", "maturity"],
+              "properties": {
+                "strategy": {"type": "string", "minLength": 1},
+                "maturity": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {"enum": ["ML1", "ML2", "ML3"]}
+                }
+              }
+            }
+          ]
+        },
+        "essentials": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["chapter", "principle"],
+          "properties": {
+            "chapter": {"type": ["string", "null"]},
+            "principle": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ism_id", "title", "ism_topic", "applicability", "views", "checks", "evidence_note"],
+      "properties": {
+        "ism_id": {"type": "string", "pattern": "^ISM-[0-9]{4}$"},
+        "title": {"type": "string", "minLength": 1},
+        "ism_topic": {"type": "string", "minLength": 1},
+        "applicability": {"enum": ["platform", "pipeline", "out-of-scope-for-cluster"]},
+        "views": {"$ref": "#/$defs/views"},
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/check"}
+        },
+        "evidence_note": {"type": "string", "minLength": 1}
+      }
+    },
+    "unmapped": {
+      "allOf": [
+        {"$ref": "#/$defs/checkIdentity"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "engine": {"enum": ["kubescape", "kyverno"]},
+            "rule_id": {"type": "string"},
+            "policy": {"type": "string"},
+            "reason": {"type": "string", "minLength": 1},
+            "provenance": {"$ref": "#/$defs/provenance"}
+          },
+          "required": ["reason"]
+        }
+      ]
+    }
+  }
+}

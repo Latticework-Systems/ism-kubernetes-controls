@@ -1,0 +1,27 @@
+# Fails block-host-path-volumes in production.
+# A volume with hostPath set is denied in production/staging namespaces.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-hostpath-prod-fail
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - name: host-vol
+    hostPath:
+      path: /var/log
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+    volumeMounts:
+    - name: host-vol
+      mountPath: /logs

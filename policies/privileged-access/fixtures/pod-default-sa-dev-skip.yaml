@@ -1,0 +1,12 @@
+# Skipped by require-non-default-sa-in-production — development namespace has
+# no ism.latticework.systems/environment: production label, so namespaceSelector misses.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-default-sa-dev-skip
+  namespace: development
+spec:
+  serviceAccountName: default
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0

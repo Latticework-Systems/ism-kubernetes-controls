@@ -1,0 +1,23 @@
+# Tests pod-level runAsNonRoot inheritance for require-run-as-non-root.
+# runAsNonRoot is set at pod level only — no container-level override.
+# The rule checks: element.securityContext.runAsNonRoot ||
+#                  request.object.spec.securityContext.runAsNonRoot
+# Pod-level value should satisfy the rule.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-pod-level-nonroot-pass
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

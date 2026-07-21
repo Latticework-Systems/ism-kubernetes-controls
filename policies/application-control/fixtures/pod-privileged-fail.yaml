@@ -1,0 +1,13 @@
+# Fails check-no-privileged — container has securityContext.privileged: true.
+# Uses an approved registry and a version tag so only the privileged rule fires.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-privileged-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0
+    securityContext:
+      privileged: true

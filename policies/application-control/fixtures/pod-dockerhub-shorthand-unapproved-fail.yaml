@@ -1,0 +1,11 @@
+# Fails check-approved-registry because other-org/myapp:v1.0 normalizes to
+# docker.io/other-org/myapp:v1.0, which is not approved.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-dockerhub-shorthand-unapproved-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: other-org/myapp:v1.0

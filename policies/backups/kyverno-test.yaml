@@ -1,0 +1,39 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-backups
+policies:
+  - kyverno-policies.yaml
+resources:
+  - fixtures/pvc-backup-true-prod-pass.yaml
+  - fixtures/pvc-backup-false-prod-pass.yaml
+  - fixtures/pvc-unlabelled-prod-fail.yaml
+  - fixtures/pvc-wrong-value-prod-fail.yaml
+  - fixtures/pvc-unlabelled-dev-skip.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+results:
+  # PVC with label=true — matches anyPattern[0]
+  - kind: PersistentVolumeClaim
+    policy: ism-backups-require-pvc-backup-label
+    rule: require-backup-label-on-pvc
+    resources:
+      - pvc-backup-true-prod-pass
+      - pvc-backup-false-prod-pass
+    result: pass
+
+  # PVC with no label or wrong value — neither anyPattern matches
+  - kind: PersistentVolumeClaim
+    policy: ism-backups-require-pvc-backup-label
+    rule: require-backup-label-on-pvc
+    resources:
+      - pvc-unlabelled-prod-fail
+      - pvc-wrong-value-prod-fail
+    result: fail
+
+  # development namespace — namespaceSelector does not match; rule skips
+  - kind: PersistentVolumeClaim
+    policy: ism-backups-require-pvc-backup-label
+    rule: require-backup-label-on-pvc
+    resources:
+      - pvc-unlabelled-dev-skip
+    result: skip

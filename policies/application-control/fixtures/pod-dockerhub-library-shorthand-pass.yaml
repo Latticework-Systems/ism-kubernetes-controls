@@ -1,0 +1,11 @@
+# Passes check-approved-registry because nginx:1.25 normalizes to
+# docker.io/library/nginx:1.25 and docker.io/library/* is approved.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-dockerhub-library-shorthand-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: nginx:1.25

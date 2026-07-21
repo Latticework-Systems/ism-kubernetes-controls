@@ -1,0 +1,12 @@
+# Fails require-scan-passed (Enforce) — scan-status label absent.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-scan-missing-fail
+  namespace: production
+  annotations:
+    ism.latticework.systems/image-built: "9999-12-31T00:00:00Z"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

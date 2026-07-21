@@ -1,0 +1,18 @@
+# Demonstrates precondition skip behaviour for the stale image rules.
+# Both block-stale-images-* rules have a precondition requiring the
+# ism.latticework.systems/image-built annotation to be non-empty. When absent,
+# the precondition fails and the rule SKIPS (does not deny).
+# The require-build-date-annotation rule (Audit) handles the missing-annotation
+# case separately and produces a violation — see pod-missing-build-annotation-fail.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-no-annotation-precondition-skip
+  namespace: production-internal
+  labels:
+    ism.latticework.systems/scan-status: "passed"
+  # No ism.latticework.systems/image-built annotation
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

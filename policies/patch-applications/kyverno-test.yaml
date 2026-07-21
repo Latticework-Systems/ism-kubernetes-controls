@@ -1,0 +1,96 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-patch-applications
+policies:
+  - policy.yaml
+resources:
+  - fixtures/pod-compliant-internet-facing-pass.yaml
+  - fixtures/pod-missing-build-annotation-fail.yaml
+  - fixtures/pod-scan-missing-fail.yaml
+  - fixtures/pod-scan-failed-value-fail.yaml
+  - fixtures/pod-stale-image-internet-facing-fail.yaml
+  - fixtures/pod-stale-image-non-internet-fail.yaml
+  - fixtures/pod-no-annotation-precondition-skip.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+results:
+  # ── require-build-date-annotation ────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-patch-applications-require-build-date
+    rule: require-build-date-annotation
+    resources:
+      - pod-compliant-internet-facing-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-patch-applications-require-build-date
+    rule: require-build-date-annotation
+    resources:
+      - pod-missing-build-annotation-fail
+    result: fail
+
+  # ── require-scan-passed ──────────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-patch-applications-require-scan-passed
+    rule: require-scan-passed
+    resources:
+      - pod-compliant-internet-facing-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-patch-applications-require-scan-passed
+    rule: require-scan-passed
+    resources:
+      - pod-scan-missing-fail
+      - pod-scan-failed-value-fail
+    result: fail
+
+  # ── block-stale-images-internet-facing ───────────────────────────────────────
+  # Far-future build date — time_since returns negative duration, never >336h
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-internet-facing
+    resources:
+      - pod-compliant-internet-facing-pass
+    result: pass
+
+  # 2020-01-01 build date — always >336h in the past
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-internet-facing
+    resources:
+      - pod-stale-image-internet-facing-fail
+    result: fail
+
+  # Annotation absent — precondition fails, rule skips
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-internet-facing
+    resources:
+      - pod-missing-build-annotation-fail
+    result: skip
+
+  # ── block-stale-images-non-internet-facing ───────────────────────────────────
+  # production-internal namespace (no internet-facing label) — rule applies
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-non-internet-facing
+    resources:
+      - pod-stale-image-non-internet-fail
+    result: fail
+
+  # Annotation absent in non-internet-facing namespace — precondition skips
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-non-internet-facing
+    resources:
+      - pod-no-annotation-precondition-skip
+    result: skip
+
+  # Internet-facing pod excluded from non-internet-facing rule
+  - kind: Pod
+    policy: ism-patch-applications-image-age-gate
+    rule: block-stale-images-non-internet-facing
+    resources:
+      - pod-stale-image-internet-facing-fail
+    result: skip

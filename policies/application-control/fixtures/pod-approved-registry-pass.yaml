@@ -1,0 +1,10 @@
+# Passes check-approved-registry — image from the approved registry.internal/* list.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-approved-registry-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.2.3

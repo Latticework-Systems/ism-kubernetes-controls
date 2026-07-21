@@ -1,0 +1,13 @@
+# Fails block-eol-declared-base-image — annotation declares an EOL OS.
+# Also passes require-base-image-label (annotation exists).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-eol-annotation-fail
+  namespace: production
+  annotations:
+    ism.latticework.systems/base-image: "ubuntu:18.04"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

@@ -1,0 +1,17 @@
+# Passes all Control 02 rules for an internet-facing production pod.
+# scan-status=passed and a far-future build date (always "fresh").
+# The "9999-12-31" date produces a negative time_since duration which is never
+# greater than 336h or 720h — stable across all CI runner timestamps.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-compliant-internet-facing-pass
+  namespace: production
+  labels:
+    ism.latticework.systems/scan-status: "passed"
+  annotations:
+    ism.latticework.systems/image-built: "9999-12-31T00:00:00Z"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

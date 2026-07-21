@@ -1,0 +1,12 @@
+# development namespace does not match the namespaceSelector
+# (ism.latticework.systems/environment: production or staging) — rule does not apply.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-unlabelled-dev-skip
+  namespace: development
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi

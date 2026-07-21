@@ -1,0 +1,156 @@
+# ISM privileged-access safeguards
+# Enforces dedicated service accounts, disables default SA automounting,
+# blocks legacy SA token Secrets, and prevents cluster-admin bindings
+# on workload service accounts.
+# This is the Kubernetes-observable subset of Control 5. It does not
+# replace privileged user lifecycle reviews, workstation separation,
+# jump-host controls, or external IdP governance evidence.
+---
+# Mutation: auto-disable automounting on default service account in all namespaces
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-privileged-access-mutate-default-sa
+  annotations:
+    latticework.systems/ism-controls: '["ISM-0445"]'
+    policies.kyverno.io/title: "ISM — Restrict Admin: Disable Default SA Automount"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: ServiceAccount
+spec:
+  rules:
+    - name: disable-automount-default-sa
+      match:
+        any:
+        - resources:
+            kinds: [ServiceAccount]
+            names: [default]
+      mutate:
+        patchStrategicMerge:
+          automountServiceAccountToken: false
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-privileged-access-require-dedicated-sa
+  annotations:
+    latticework.systems/ism-controls: '["ISM-0445", "ISM-1883"]'
+    policies.kyverno.io/title: "ISM — Restrict Admin: Require Dedicated Service Account"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-non-default-sa-in-production
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production]
+      validate:
+        message: >-
+          Production Pods must use a dedicated ServiceAccount, not 'default'.
+          Create a ServiceAccount named after your workload with minimal permissions.
+          Supports the mapped ISM privileged-access controls.
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.spec.serviceAccountName || 'default' }}"
+              operator: Equals
+              value: "default"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-privileged-access-block-legacy-sa-tokens
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1685"]'
+    policies.kyverno.io/title: "ISM — Restrict Admin: Block Legacy SA Token Secrets"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: block-legacy-sa-token-secrets
+      match:
+        any:
+        - resources:
+            kinds: [Secret]
+      validate:
+        message: >-
+          Legacy kubernetes.io/service-account-token Secrets are long-lived
+          and cannot be scoped. Use projected ServiceAccount tokens instead.
+          Supports the mapped ISM privileged-access controls.
+        deny:
+          conditions:
+            all:
+            - key: "{{ request.object.type }}"
+              operator: Equals
+              value: "kubernetes.io/service-account-token"
+---
+# Prevent new ClusterRoleBindings that grant cluster-admin to non-break-glass
+# principals. This inspects the SUBJECTS of the binding (who is being granted
+# access), not the requesting user. A break-glass operator cannot create a
+# cluster-admin binding for an ordinary user or service account.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-privileged-access-block-cluster-admin-binding
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1883"]'
+    policies.kyverno.io/title: "ISM — Restrict Admin: Block cluster-admin Bindings"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: ClusterRoleBinding
+    policies.kyverno.io/description: >-
+      ML2 Control 5: Prevent creation or update of ClusterRoleBindings that
+      grant cluster-admin to subjects outside the break-glass group.
+      This inspects the binding's subjects array, not the requesting user,
+      so even a break-glass operator cannot create a persistent cluster-admin
+      binding for an ordinary user or service account.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: block-cluster-admin-to-non-breakglass-subjects
+      match:
+        any:
+        - resources:
+            kinds: [ClusterRoleBinding]
+      exclude:
+        any:
+        # Allow Kubernetes-bootstrapped system bindings by name
+        - resources:
+            names:
+            - "cluster-admin"
+            - "system:*"
+      preconditions:
+        all:
+        - key: "{{ request.object.roleRef.name }}"
+          operator: Equals
+          value: "cluster-admin"
+      validate:
+        message: >-
+          ClusterRoleBinding '{{ request.object.metadata.name }}' grants
+          cluster-admin to one or more subjects outside the break-glass group.
+          Only subjects in the 'break-glass' group may hold cluster-admin.
+          Supports the mapped ISM privileged-access controls.
+        foreach:
+        - list: "request.object.subjects"
+          deny:
+            conditions:
+              any:
+              # Deny non-Group subjects (Users, ServiceAccounts)
+              - key: "{{ element.kind }}"
+                operator: NotEquals
+                value: "Group"
+              # Deny Groups that are not break-glass
+              - key: "{{ element.name }}"
+                operator: NotEquals
+                value: "break-glass"

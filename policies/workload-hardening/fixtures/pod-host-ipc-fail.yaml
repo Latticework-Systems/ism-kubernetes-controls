@@ -1,0 +1,20 @@
+# Fails block-host-namespaces (hostIPC branch).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-host-ipc-fail
+  namespace: production
+spec:
+  hostIPC: true
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

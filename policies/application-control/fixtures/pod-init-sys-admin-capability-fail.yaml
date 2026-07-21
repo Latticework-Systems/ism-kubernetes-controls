@@ -1,0 +1,18 @@
+# Fails check-no-privileged because SYS_ADMIN is privileged-equivalent for initContainers too.
+# Uses an approved registry and a version tag so only the privileged rule fires.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-init-sys-admin-capability-fail
+  namespace: production
+spec:
+  initContainers:
+  - name: init
+    image: registry.internal/init:v1.0
+    securityContext:
+      capabilities:
+        add:
+        - SYS_ADMIN
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0

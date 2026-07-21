@@ -1,0 +1,24 @@
+# Canonical compliant Pod — passes all Control 04 rules.
+# Used as the positive baseline for all 7 rules in this control.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-fully-hardened-pass
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  hostPID: false
+  hostIPC: false
+  hostNetwork: false
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

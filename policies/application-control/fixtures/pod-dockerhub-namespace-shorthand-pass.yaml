@@ -1,0 +1,11 @@
+# Passes check-approved-registry because your-org/myapp:v1.0 normalizes to
+# docker.io/your-org/myapp:v1.0 and docker.io/your-org/* is approved.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-dockerhub-namespace-shorthand-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: your-org/myapp:v1.0

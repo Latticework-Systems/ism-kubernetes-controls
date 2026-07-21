@@ -1,0 +1,13 @@
+# Fails require-build-date-annotation (Audit) — annotation absent.
+# block-stale-images-* rules SKIP (precondition: annotation must be non-empty).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-missing-build-annotation-fail
+  namespace: production
+  labels:
+    ism.latticework.systems/scan-status: "passed"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

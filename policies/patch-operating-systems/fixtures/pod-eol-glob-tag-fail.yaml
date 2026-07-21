@@ -1,0 +1,14 @@
+# Fails block-eol-image-tags via glob wildcard match.
+# The EOL list includes "python:3.8*" — "python:3.8-slim" should match.
+# This fixture verifies Kyverno's AnyIn glob wildcard support for string values.
+# If this test unexpectedly passes, the wildcard is not working and the policy
+# has a gap — raise as a policy defect.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-eol-glob-tag-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: python:3.8-slim

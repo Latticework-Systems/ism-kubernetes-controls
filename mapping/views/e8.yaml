@@ -1,0 +1,300 @@
+schema_version: '1.0'
+source:
+  canonical: ../ism-mapping.yaml
+  ism_release: 2026-06
+  generated: true
+profile_coverage:
+  profile: ASD Essential Eight Maturity Level 2
+  source: ../provenance.lock.yaml
+  total_controls: 87
+  detector_backed_controls:
+  - ISM-0445
+  - ISM-1490
+  - ISM-1501
+  - ISM-1511
+  - ISM-1657
+  - ISM-1685
+  - ISM-1690
+  - ISM-1693
+  - ISM-1694
+  - ISM-1695
+  - ISM-1698
+  - ISM-1700
+  - ISM-1808
+  - ISM-1871
+  - ISM-1876
+  - ISM-1877
+  - ISM-1883
+  without_detector_mapping:
+  - ISM-0123
+  - ISM-0140
+  - ISM-0843
+  - ISM-0974
+  - ISM-1173
+  - ISM-1175
+  - ISM-1228
+  - ISM-1380
+  - ISM-1387
+  - ISM-1401
+  - ISM-1412
+  - ISM-1485
+  - ISM-1486
+  - ISM-1488
+  - ISM-1489
+  - ISM-1504
+  - ISM-1507
+  - ISM-1509
+  - ISM-1515
+  - ISM-1542
+  - ISM-1544
+  - ISM-1582
+  - ISM-1585
+  - ISM-1623
+  - ISM-1647
+  - ISM-1648
+  - ISM-1650
+  - ISM-1654
+  - ISM-1660
+  - ISM-1667
+  - ISM-1668
+  - ISM-1669
+  - ISM-1670
+  - ISM-1671
+  - ISM-1672
+  - ISM-1673
+  - ISM-1679
+  - ISM-1680
+  - ISM-1681
+  - ISM-1682
+  - ISM-1683
+  - ISM-1687
+  - ISM-1688
+  - ISM-1689
+  - ISM-1691
+  - ISM-1699
+  - ISM-1701
+  - ISM-1702
+  - ISM-1704
+  - ISM-1705
+  - ISM-1707
+  - ISM-1807
+  - ISM-1810
+  - ISM-1811
+  - ISM-1812
+  - ISM-1814
+  - ISM-1815
+  - ISM-1819
+  - ISM-1823
+  - ISM-1824
+  - ISM-1859
+  - ISM-1860
+  - ISM-1870
+  - ISM-1872
+  - ISM-1873
+  - ISM-1889
+  - ISM-1892
+  - ISM-1893
+  - ISM-1905
+  - ISM-1906
+strategies:
+- id: E8-01
+  name: Application control
+  ismControls:
+  - '1490'
+  - '1657'
+  - '1871'
+- id: E8-02
+  name: Patch applications
+  ismControls:
+  - '1690'
+  - '1693'
+  - '1698'
+  - '1700'
+  - '1808'
+  - '1876'
+- id: E8-03
+  name: Configure Microsoft Office macro settings
+  ismControls: []
+- id: E8-04
+  name: User application hardening
+  ismControls: []
+- id: E8-05
+  name: Restrict administrative privileges
+  ismControls:
+  - '0445'
+  - '1685'
+  - '1883'
+- id: E8-06
+  name: Patch operating systems
+  ismControls:
+  - '1501'
+  - '1694'
+  - '1695'
+  - '1877'
+- id: E8-07
+  name: Multi-factor authentication
+  ismControls: []
+- id: E8-08
+  name: Regular backups
+  ismControls:
+  - '1511'
+checks:
+- engine: kubescape
+  rule_id: ism-allowed-registries
+  provenance:
+    disposition: adapt
+    upstream:
+      repository: https://github.com/kubescape/regolibrary
+      ref: 01f57decc4a771facfb7166f02af986ccb560203
+      control_id: C-0078
+      rule_name: container-image-repository-v1
+    rationale: The upstream rule provides the base allow-list behaviour; the local
+      implementation also accepts the public Kyverno registry ConfigMap.
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kubescape
+  rule_id: ism-minimise-clusterrolebindings
+  provenance:
+    disposition: custom
+    rationale: Upstream administrative-role controls identify cluster-admin-equivalent
+      access, not every non-system cluster-wide service-account binding.
+  ism_ids:
+  - ISM-1883
+  coverage: partial
+- engine: kubescape
+  rule_id: ism-no-cluster-admin-binding
+  provenance:
+    disposition: adapt
+    upstream:
+      repository: https://github.com/kubescape/regolibrary
+      ref: 01f57decc4a771facfb7166f02af986ccb560203
+      control_id: C-0185
+      rule_name: cluster-admin-role
+    rationale: The upstream aggregated rule covers all bound subjects; the standalone
+      local rule applies the same subject scope directly to RBAC bindings.
+  ism_ids:
+  - ISM-1883
+  coverage: partial
+- engine: kubescape
+  rule_id: ism-no-privileged-containers
+  provenance:
+    disposition: adapt
+    upstream:
+      repository: https://github.com/kubescape/regolibrary
+      ref: 01f57decc4a771facfb7166f02af986ccb560203
+      control_id: C-0057
+      rule_name: rule-privilege-escalation
+    rationale: The local rule follows the upstream privileged and SYS_ADMIN semantics
+      while remaining a standalone implementation with explicit local fixtures.
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kubescape
+  rule_id: ism-no-wildcard-permissions
+  provenance:
+    disposition: custom
+    rationale: Kubescape control C-0187 currently points to a cluster-admin enumeration
+      rule rather than a rule dedicated to wildcard RBAC fields.
+  ism_ids:
+  - ISM-1883
+  coverage: partial
+- engine: kubescape
+  rule_id: ism-pod-security-standards
+  provenance:
+    disposition: custom
+    rationale: No single upstream control checks namespace Pod Security Admission
+      or an equivalent enforced Kyverno policy set.
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kyverno
+  policy: ism-application-control-approved-registry
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kyverno
+  policy: ism-application-control-no-latest-tag
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kyverno
+  policy: ism-application-control-no-privileged
+  ism_ids:
+  - ISM-1490
+  - ISM-1657
+  - ISM-1871
+  coverage: partial
+- engine: kyverno
+  policy: ism-backups-require-pvc-backup-label
+  ism_ids:
+  - ISM-1511
+  coverage: partial
+- engine: kyverno
+  policy: ism-patch-applications-image-age-gate
+  ism_ids:
+  - ISM-1690
+  - ISM-1693
+  - ISM-1876
+  coverage: partial
+- engine: kyverno
+  policy: ism-patch-applications-require-build-date
+  ism_ids:
+  - ISM-1690
+  - ISM-1693
+  coverage: partial
+- engine: kyverno
+  policy: ism-patch-applications-require-scan-passed
+  ism_ids:
+  - ISM-1698
+  - ISM-1700
+  - ISM-1808
+  coverage: partial
+- engine: kyverno
+  policy: ism-patch-operating-systems-block-eol-base-images
+  ism_ids:
+  - ISM-1501
+  - ISM-1694
+  - ISM-1695
+  - ISM-1877
+  coverage: partial
+- engine: kyverno
+  policy: ism-patch-operating-systems-require-base-image-label
+  ism_ids:
+  - ISM-1501
+  - ISM-1694
+  - ISM-1695
+  - ISM-1877
+  coverage: partial
+- engine: kyverno
+  policy: ism-privileged-access-block-cluster-admin-binding
+  ism_ids:
+  - ISM-1883
+  coverage: partial
+- engine: kyverno
+  policy: ism-privileged-access-block-legacy-sa-tokens
+  ism_ids:
+  - ISM-1685
+  coverage: partial
+- engine: kyverno
+  policy: ism-privileged-access-mutate-default-sa
+  ism_ids:
+  - ISM-0445
+  coverage: partial
+- engine: kyverno
+  policy: ism-privileged-access-require-dedicated-sa
+  ism_ids:
+  - ISM-0445
+  - ISM-1883
+  coverage: partial
+unmapped: []

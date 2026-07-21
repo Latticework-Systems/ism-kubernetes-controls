@@ -1,0 +1,12 @@
+# Passes all three rules.
+# Uses an image from the second approved registry entry (ghcr.io/your-org/*),
+# a semver tag (not latest), and no privileged security context.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-version-tag-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: ghcr.io/your-org/myapp:v2.1.0

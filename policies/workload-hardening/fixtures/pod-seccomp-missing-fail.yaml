@@ -1,0 +1,22 @@
+# Fails require-seccomp-profile.
+# seccompProfile is absent at both container and pod level.
+# The rule resolves to '' which is AnyNotIn ["RuntimeDefault","Localhost"]
+# → true → denied.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-seccomp-missing-fail
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    # No seccompProfile at pod level
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+      # No seccompProfile at container level either

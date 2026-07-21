@@ -1,0 +1,21 @@
+# Fails block-host-namespaces (hostPID branch).
+# The rule uses conditions.any — hostPID: true alone triggers the deny.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-host-pid-fail
+  namespace: production
+spec:
+  hostPID: true
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

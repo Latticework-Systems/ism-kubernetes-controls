@@ -1,0 +1,20 @@
+# Fails require-read-only-rootfs (Audit) in production.
+# readOnlyRootFilesystem: false — rule NotEquals true → denied (audit violation).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-writable-rootfs-fail
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop: ["ALL"]

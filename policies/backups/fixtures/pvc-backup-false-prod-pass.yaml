@@ -1,0 +1,14 @@
+# label value "false" is explicitly allowed — teams must declare non-backed-up
+# PVCs intentionally rather than leave them unlabelled silently.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-backup-false-prod-pass
+  namespace: production
+  labels:
+    ism.latticework.systems/backup-required: "false"
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi

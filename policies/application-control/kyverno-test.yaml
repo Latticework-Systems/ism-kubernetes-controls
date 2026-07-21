@@ -1,0 +1,101 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-application-control
+policies:
+  - kyverno-policies.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+resources:
+  - fixtures/configmap-approved-registries.yaml
+  - fixtures/pod-approved-registry-pass.yaml
+  - fixtures/pod-digest-ref-pass.yaml
+  - fixtures/pod-version-tag-pass.yaml
+  - fixtures/pod-dockerhub-library-shorthand-pass.yaml
+  - fixtures/pod-dockerhub-library-explicit-pass.yaml
+  - fixtures/pod-dockerhub-namespace-shorthand-pass.yaml
+  - fixtures/pod-non-privileged-pass.yaml
+  - fixtures/pod-unapproved-registry-fail.yaml
+  - fixtures/pod-dockerhub-shorthand-unapproved-fail.yaml
+  - fixtures/pod-latest-explicit-fail.yaml
+  - fixtures/pod-implicit-latest-fail.yaml
+  - fixtures/pod-privileged-fail.yaml
+  - fixtures/pod-sys-admin-capability-fail.yaml
+  - fixtures/pod-init-sys-admin-capability-fail.yaml
+results:
+  # --- check-approved-registry ---
+  - kind: Pod
+    policy: ism-application-control-approved-registry
+    rule: check-approved-registry
+    resources:
+      - pod-unapproved-registry-fail
+      - pod-dockerhub-shorthand-unapproved-fail
+    result: fail
+
+  - kind: Pod
+    policy: ism-application-control-approved-registry
+    rule: check-approved-registry
+    resources:
+      - pod-approved-registry-pass
+      - pod-digest-ref-pass
+      - pod-version-tag-pass
+      - pod-dockerhub-library-shorthand-pass
+      - pod-dockerhub-library-explicit-pass
+      - pod-dockerhub-namespace-shorthand-pass
+    result: pass
+
+  # --- check-no-explicit-latest-tag ---
+  - kind: Pod
+    policy: ism-application-control-no-latest-tag
+    rule: check-no-explicit-latest-tag
+    resources:
+      - pod-latest-explicit-fail
+    result: fail
+
+  - kind: Pod
+    policy: ism-application-control-no-latest-tag
+    rule: check-no-explicit-latest-tag
+    resources:
+      - pod-approved-registry-pass
+      - pod-digest-ref-pass
+      - pod-dockerhub-library-shorthand-pass
+      - pod-dockerhub-library-explicit-pass
+      - pod-dockerhub-namespace-shorthand-pass
+    result: pass
+
+  # --- check-no-implicit-latest-tag ---
+  - kind: Pod
+    policy: ism-application-control-no-latest-tag
+    rule: check-no-implicit-latest-tag
+    resources:
+      - pod-implicit-latest-fail
+    result: fail
+
+  - kind: Pod
+    policy: ism-application-control-no-latest-tag
+    rule: check-no-implicit-latest-tag
+    resources:
+      # explicit :latest has a colon — implicit-latest check does not fire
+      - pod-latest-explicit-fail
+      - pod-digest-ref-pass
+      - pod-dockerhub-library-shorthand-pass
+      - pod-dockerhub-library-explicit-pass
+      - pod-dockerhub-namespace-shorthand-pass
+    result: pass
+
+  # --- check-no-privileged ---
+  - kind: Pod
+    policy: ism-application-control-no-privileged
+    rule: check-no-privileged
+    resources:
+      - pod-privileged-fail
+      - pod-sys-admin-capability-fail
+      - pod-init-sys-admin-capability-fail
+    result: fail
+
+  - kind: Pod
+    policy: ism-application-control-no-privileged
+    rule: check-no-privileged
+    resources:
+      - pod-non-privileged-pass
+      - pod-approved-registry-pass
+    result: pass

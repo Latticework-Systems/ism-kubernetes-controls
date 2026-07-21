@@ -1,0 +1,140 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-workload-hardening
+policies:
+  - policy.yaml
+resources:
+  - fixtures/pod-fully-hardened-pass.yaml
+  - fixtures/pod-pod-level-nonroot-pass.yaml
+  - fixtures/pod-pod-level-seccomp-pass.yaml
+  - fixtures/pod-runs-as-root-fail.yaml
+  - fixtures/pod-privilege-escalation-fail.yaml
+  - fixtures/pod-no-drop-all-fail.yaml
+  - fixtures/pod-capabilities-missing-fail.yaml
+  - fixtures/pod-seccomp-missing-fail.yaml
+  - fixtures/pod-host-pid-fail.yaml
+  - fixtures/pod-host-ipc-fail.yaml
+  - fixtures/pod-host-network-fail.yaml
+  - fixtures/pod-hostpath-prod-fail.yaml
+  - fixtures/pod-hostpath-dev-skip.yaml
+  - fixtures/pod-writable-rootfs-fail.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+results:
+  # ── require-run-as-non-root ──────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-run-as-non-root
+    resources:
+      - pod-fully-hardened-pass
+      - pod-pod-level-nonroot-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-run-as-non-root
+    resources:
+      - pod-runs-as-root-fail
+    result: fail
+
+  # ── require-no-privilege-escalation ─────────────────────────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-no-privilege-escalation
+    resources:
+      - pod-fully-hardened-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-no-privilege-escalation
+    resources:
+      - pod-privilege-escalation-fail
+    result: fail
+
+  # ── require-drop-all-capabilities ───────────────────────────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-drop-all-capabilities
+    resources:
+      - pod-fully-hardened-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-drop-all-capabilities
+    resources:
+      - pod-no-drop-all-fail
+      - pod-capabilities-missing-fail
+    result: fail
+
+  # ── require-seccomp-profile ──────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-seccomp-profile
+    resources:
+      - pod-fully-hardened-pass
+      - pod-pod-level-seccomp-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-security-context
+    rule: require-seccomp-profile
+    resources:
+      - pod-seccomp-missing-fail
+    result: fail
+
+  # ── block-host-namespaces ────────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-block-host-namespaces
+    rule: block-host-namespaces
+    resources:
+      - pod-fully-hardened-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-block-host-namespaces
+    rule: block-host-namespaces
+    resources:
+      - pod-host-pid-fail
+      - pod-host-ipc-fail
+      - pod-host-network-fail
+    result: fail
+
+  # ── block-host-path-volumes (production/staging scoped) ─────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-block-host-path
+    rule: block-host-path-volumes
+    resources:
+      - pod-fully-hardened-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-block-host-path
+    rule: block-host-path-volumes
+    resources:
+      - pod-hostpath-prod-fail
+    result: fail
+
+  # development namespace — namespaceSelector does not match; rule skips
+  - kind: Pod
+    policy: ism-workload-hardening-block-host-path
+    rule: block-host-path-volumes
+    resources:
+      - pod-hostpath-dev-skip
+    result: skip
+
+  # ── require-read-only-rootfs (production scoped, Audit) ──────────────────────
+  - kind: Pod
+    policy: ism-workload-hardening-require-read-only-rootfs
+    rule: require-read-only-rootfs
+    resources:
+      - pod-fully-hardened-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-workload-hardening-require-read-only-rootfs
+    rule: require-read-only-rootfs
+    resources:
+      - pod-writable-rootfs-fail
+    result: fail

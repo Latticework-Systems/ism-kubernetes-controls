@@ -1,0 +1,289 @@
+# Kyverno CLI test copy of the application-control ClusterPolicies from policy.yaml.
+# policy.yaml is the deployable source of truth. This file excludes non-policy
+# objects and keeps an inline approved-registry allowlist so `kyverno test`
+# can run without a live cluster ConfigMap lookup.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-application-control-approved-registry
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1490", "ISM-1657", "ISM-1871"]'
+    policies.kyverno.io/title: "ISM — Application Control: Approved Registry"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      ML2 Control 1: Only container images from approved registries may be deployed.
+      The approved registry list is read from the ism-approved-registries ConfigMap
+      in the kyverno namespace. Edit that ConfigMap to customise the allowlist.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-approved-registry
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+      validate:
+        message: >-
+          One or more container images are not from an approved registry.
+          Approved registries are defined in the ism-approved-registries ConfigMap.
+          Supports ISM-1490, ISM-1657 and ISM-1871.
+        foreach:
+        - list: "request.object.spec.initContainers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && (contains(split(element.image, '/')[0], '.') || contains(split(element.image, '/')[0], ':') || split(element.image, '/')[0] == 'localhost') && !(split(element.image, '/')[0] == 'docker.io' && length(split(element.image, '/')) == `2`) }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ element.image }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.containers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && (contains(split(element.image, '/')[0], '.') || contains(split(element.image, '/')[0], ':') || split(element.image, '/')[0] == 'localhost') && !(split(element.image, '/')[0] == 'docker.io' && length(split(element.image, '/')) == `2`) }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ element.image }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.initContainers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && split(element.image, '/')[0] == 'docker.io' && length(split(element.image, '/')) == `2` }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/library/', split(element.image, '/')[1]]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.containers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && split(element.image, '/')[0] == 'docker.io' && length(split(element.image, '/')) == `2` }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/library/', split(element.image, '/')[1]]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.initContainers"
+          preconditions:
+            all:
+            - key: "{{ !contains(element.image, '/') }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/library/', element.image]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.containers"
+          preconditions:
+            all:
+            - key: "{{ !contains(element.image, '/') }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/library/', element.image]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.initContainers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && !(contains(split(element.image, '/')[0], '.') || contains(split(element.image, '/')[0], ':') || split(element.image, '/')[0] == 'localhost') }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/', element.image]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+        - list: "request.object.spec.containers"
+          preconditions:
+            all:
+            - key: "{{ contains(element.image, '/') && !(contains(split(element.image, '/')[0], '.') || contains(split(element.image, '/')[0], ':') || split(element.image, '/')[0] == 'localhost') }}"
+              operator: Equals
+              value: true
+          deny:
+            conditions:
+              all:
+              - key: "{{ join('', ['docker.io/', element.image]) }}"
+                operator: AnyNotIn
+                value:
+                - "registry.internal/*"
+                - "ghcr.io/your-org/*"
+                - "docker.io/library/*"
+                - "docker.io/your-org/*"
+                - "your-account.dkr.ecr.ap-southeast-2.amazonaws.com/*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-application-control-no-latest-tag
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1490", "ISM-1657", "ISM-1871"]'
+    policies.kyverno.io/title: "ISM — Application Control: No Latest Tag"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-no-explicit-latest-tag
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production, staging]
+      validate:
+        message: >-
+          Images must use a specific version tag or digest, not 'latest'.
+          Supports ISM-1490, ISM-1657 and ISM-1871.
+        foreach:
+        - list: "request.object.spec.initContainers"
+          deny:
+            conditions:
+              all:
+              - key: "{{ pattern_match('*:latest', element.image) }}"
+                operator: Equals
+                value: true
+        - list: "request.object.spec.containers"
+          deny:
+            conditions:
+              all:
+              - key: "{{ pattern_match('*:latest', element.image) }}"
+                operator: Equals
+                value: true
+    - name: check-no-implicit-latest-tag
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production, staging]
+      validate:
+        message: >-
+          Images must use a specific version tag or digest, not an implicit
+          'latest' tag. References like 'nginx' or 'registry.internal:5000/app'
+          default to ':latest' and are not permitted.
+          Supports ISM-1490, ISM-1657 and ISM-1871.
+        foreach:
+        - list: "request.object.spec.initContainers"
+          deny:
+            conditions:
+              all:
+              - key: "{{ regex_match('(^[^/:@]+$)|(^.*/[^:@]+$)', element.image) }}"
+                operator: Equals
+                value: true
+        - list: "request.object.spec.containers"
+          deny:
+            conditions:
+              all:
+              - key: "{{ regex_match('(^[^/:@]+$)|(^.*/[^:@]+$)', element.image) }}"
+                operator: Equals
+                value: true
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-application-control-no-privileged
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1490", "ISM-1657", "ISM-1871"]'
+    policies.kyverno.io/title: "ISM — Application Control: No Privileged Containers"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-no-privileged
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+      validate:
+        message: >-
+          Privileged containers and the SYS_ADMIN capability are not permitted.
+          Supports ISM-1490, ISM-1657 and ISM-1871.
+        foreach:
+        - list: "request.object.spec.initContainers"
+          deny:
+            conditions:
+              any:
+              - key: "{{ element.securityContext.privileged || false }}"
+                operator: Equals
+                value: true
+              - key: "{{ element.securityContext.capabilities.add || [] }}"
+                operator: AnyIn
+                value:
+                - SYS_ADMIN
+        - list: "request.object.spec.containers"
+          deny:
+            conditions:
+              any:
+              - key: "{{ element.securityContext.privileged || false }}"
+                operator: Equals
+                value: true
+              - key: "{{ element.securityContext.capabilities.add || [] }}"
+                operator: AnyIn
+                value:
+                - SYS_ADMIN

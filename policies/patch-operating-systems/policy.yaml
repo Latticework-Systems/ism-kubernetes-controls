@@ -1,0 +1,197 @@
+# ISM operating-system patch evidence
+# Labels and policies for node OS and container base image currency.
+#
+# Node OS patching is an infrastructure concern (AMI rotation, node pool
+# upgrades), not a K8s admission concern. This file handles the container
+# base image layer.
+# It does not, by itself, satisfy node OS patch timing, emergency patching,
+# or unsupported node replacement evidence.
+#
+# Strategy:
+# 1. Require a CI-set annotation declaring the base OS (ism.latticework.systems/base-image).
+#    This is the primary mechanism — it works for all images regardless of naming.
+# 2. Block images whose base-image annotation declares an EOL OS version.
+# 3. As a supplementary catch-all, deny images whose tag literally matches
+#    known EOL base image names (e.g. bare "ubuntu:20.04" pulls). This only
+#    catches direct base image usage, not application images built on top of
+#    them — that is an inherent limitation documented below.
+#
+# IMPORTANT: The tag-matching rule cannot detect the FROM base image of an
+# application image (e.g. ghcr.io/org/app:1.2.3 built FROM ubuntu:20.04).
+# For complete base-image currency enforcement, your CI pipeline must set
+# the ism.latticework.systems/base-image annotation. SBOM/attestation integration
+# (e.g. cosign attest) is the ML3 path for automated base-image provenance.
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-patch-operating-systems-require-base-image-label
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1501", "ISM-1694", "ISM-1695", "ISM-1877"]'
+    policies.kyverno.io/title: "ISM — Patch OS: Require Base Image Annotation"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      ML2 Control 6: Production Pods must carry annotation
+      'ism.latticework.systems/base-image' identifying the OS base image and version
+      (e.g. 'alpine:3.19', 'ubuntu:22.04'). This annotation must be set by
+      your CI/CD pipeline. It enables both patch currency assessment and the
+      EOL base image blocking rule below.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-base-image-label
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production]
+      validate:
+        message: >-
+          Production Pods should carry annotation 'ism.latticework.systems/base-image'
+          identifying the OS base image (e.g. ubuntu:22.04, alpine:3.19).
+          Set this in your CI pipeline or deployment manifest.
+          Supports the mapped ISM operating-system patch controls.
+        pattern:
+          metadata:
+            annotations:
+              ism.latticework.systems/base-image: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-patch-operating-systems-block-eol-base-images
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1501", "ISM-1694", "ISM-1695", "ISM-1877"]'
+    policies.kyverno.io/title: "ISM — Patch OS: Block End-of-Life Base Images"
+    policies.kyverno.io/category: "ASD ISM"
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      ML2 Control 6: Block workloads declaring an end-of-life OS base image.
+      Primary check: the ism.latticework.systems/base-image annotation (set by CI).
+      Supplementary check: image tags that literally match known EOL images.
+      Update the EOL lists as OS versions reach end-of-life.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    # Primary rule: check the CI-set base-image annotation for EOL values
+    - name: block-eol-declared-base-image
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+            namespaceSelector:
+              matchExpressions:
+              - key: ism.latticework.systems/environment
+                operator: In
+                values: [production, staging]
+      preconditions:
+        all:
+        - key: "{{ request.object.metadata.annotations.\"ism.latticework.systems/base-image\" || '' }}"
+          operator: NotEquals
+          value: ""
+      validate:
+        message: >-
+          The declared base image '{{ request.object.metadata.annotations."ism.latticework.systems/base-image" }}'
+          is an end-of-life OS that no longer receives security patches. Update to
+          a supported OS version and update the ism.latticework.systems/base-image annotation.
+          Supports the mapped ISM operating-system patch controls.
+        deny:
+          conditions:
+            any:
+            - key: "{{ request.object.metadata.annotations.\"ism.latticework.systems/base-image\" }}"
+              operator: AnyIn
+              value:
+              - "ubuntu:18.04"
+              - "ubuntu:20.04"
+              - "centos:7"
+              - "centos:8"
+              - "debian:9"
+              - "debian:10"
+              - "python:3.6"
+              - "python:3.7"
+              - "python:3.8"
+              - "node:14"
+              - "node:16"
+    # Supplementary rule: catch direct pulls of EOL base images by tag name.
+    # This only matches when the image reference itself is a known EOL image.
+    # It cannot detect application images built FROM an EOL base.
+    - name: block-eol-image-tags
+      match:
+        any:
+        - resources:
+            kinds: [Pod]
+      validate:
+        message: >-
+          One or more container images appear to use an end-of-life OS base image.
+          These OS versions no longer receive security patches.
+          Supports the mapped ISM operating-system patch controls.
+        foreach:
+        - list: "request.object.spec.initContainers"
+          deny:
+            conditions:
+              any:
+              - key: "{{ element.image }}"
+                operator: AnyIn
+                value:
+                # Unscoped (Docker Hub short names)
+                - "ubuntu:18.04"
+                - "ubuntu:20.04"
+                - "centos:7"
+                - "centos:8"
+                - "debian:9"
+                - "debian:10"
+                - "python:3.6*"
+                - "python:3.7*"
+                - "python:3.8*"
+                - "node:14*"
+                - "node:16*"
+                # Docker Hub fully qualified
+                - "docker.io/library/ubuntu:18.04"
+                - "docker.io/library/ubuntu:20.04"
+                - "docker.io/library/centos:7"
+                - "docker.io/library/centos:8"
+                - "docker.io/library/debian:9"
+                - "docker.io/library/debian:10"
+                - "docker.io/library/python:3.6*"
+                - "docker.io/library/python:3.7*"
+                - "docker.io/library/python:3.8*"
+                - "docker.io/library/node:14*"
+                - "docker.io/library/node:16*"
+        - list: "request.object.spec.containers"
+          deny:
+            conditions:
+              any:
+              - key: "{{ element.image }}"
+                operator: AnyIn
+                value:
+                # Unscoped (Docker Hub short names)
+                - "ubuntu:18.04"
+                - "ubuntu:20.04"
+                - "centos:7"
+                - "centos:8"
+                - "debian:9"
+                - "debian:10"
+                - "python:3.6*"
+                - "python:3.7*"
+                - "python:3.8*"
+                - "node:14*"
+                - "node:16*"
+                # Docker Hub fully qualified
+                - "docker.io/library/ubuntu:18.04"
+                - "docker.io/library/ubuntu:20.04"
+                - "docker.io/library/centos:7"
+                - "docker.io/library/centos:8"
+                - "docker.io/library/debian:9"
+                - "docker.io/library/debian:10"
+                - "docker.io/library/python:3.6*"
+                - "docker.io/library/python:3.7*"
+                - "docker.io/library/python:3.8*"
+                - "docker.io/library/node:14*"
+                - "docker.io/library/node:16*"

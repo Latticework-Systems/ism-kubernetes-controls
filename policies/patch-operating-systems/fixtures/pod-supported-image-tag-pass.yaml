@@ -1,0 +1,11 @@
+# Passes block-eol-image-tags — image is an application image (not a bare EOL
+# base image tag), and it is not in the EOL list.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-supported-image-tag-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v2.3.1

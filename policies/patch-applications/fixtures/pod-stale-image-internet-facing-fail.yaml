@@ -1,0 +1,15 @@
+# Fails block-stale-images-internet-facing — build date is 2020-01-01 which
+# is always >336h (14 days) in the past. Stable across all CI runner timestamps.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-stale-image-internet-facing-fail
+  namespace: production
+  labels:
+    ism.latticework.systems/scan-status: "passed"
+  annotations:
+    ism.latticework.systems/image-built: "2020-01-01T00:00:00Z"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

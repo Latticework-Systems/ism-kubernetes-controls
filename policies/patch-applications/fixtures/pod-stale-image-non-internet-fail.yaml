@@ -1,0 +1,18 @@
+# Fails block-stale-images-non-internet-facing — build date is 2020-01-01
+# which is always >720h (30 days) in the past.
+# production-internal namespace has ism.latticework.systems/environment=production but
+# no exposure=internet-facing label, so the 30-day rule applies and the
+# 14-day internet-facing rule does NOT apply.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-stale-image-non-internet-fail
+  namespace: production-internal
+  labels:
+    ism.latticework.systems/scan-status: "passed"
+  annotations:
+    ism.latticework.systems/image-built: "2020-01-01T00:00:00Z"
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

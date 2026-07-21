@@ -1,0 +1,22 @@
+# Fails require-no-privilege-escalation.
+# allowPrivilegeEscalation is absent (null). The rule denies when the field
+# is NotEquals false — null != false is true → denied.
+# Explicitly setting allowPrivilegeEscalation: false is required.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-privilege-escalation-fail
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      # allowPrivilegeEscalation deliberately absent to trigger the rule
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

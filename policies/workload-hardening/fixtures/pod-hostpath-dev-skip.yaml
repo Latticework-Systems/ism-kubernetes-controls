@@ -1,0 +1,24 @@
+# block-host-path-volumes skips in development — namespace does not match
+# the namespaceSelector (production, staging). Rule does not apply.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-hostpath-dev-skip
+  namespace: development
+spec:
+  volumes:
+  - name: host-vol
+    hostPath:
+      path: /var/log
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

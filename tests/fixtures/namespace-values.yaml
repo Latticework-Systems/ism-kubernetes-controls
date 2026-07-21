@@ -1,0 +1,33 @@
+# Namespace label fixtures for kyverno test (v1.13+).
+# Kyverno CLI uses namespaceSelector entries in a Values file to resolve
+# namespace labels for namespaceSelector rules — Namespace objects in the
+# resources list are no longer sufficient in CLI v1.13+.
+#
+# Reference this file via `variables: ../../tests/fixtures/namespace-values.yaml`
+# in each control's kyverno-test.yaml.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Values
+namespaceSelector:
+  # production — internet-facing (triggers 14-day stale image rule in Control 02)
+  - name: production
+    labels:
+      ism.latticework.systems/environment: production
+      ism.latticework.systems/exposure: internet-facing
+  # production-internal — production but NOT internet-facing
+  - name: production-internal
+    labels:
+      ism.latticework.systems/environment: production
+  # staging — matches all production+staging selectors
+  - name: staging
+    labels:
+      ism.latticework.systems/environment: staging
+  # development — no ISM environment label; all namespaceSelector rules skip
+  - name: development
+    labels:
+      ism.latticework.systems/environment: development
+  # default — system namespace (used by SA mutation test)
+  - name: default
+    labels: {}
+  # kyverno — system namespace
+  - name: kyverno
+    labels: {}

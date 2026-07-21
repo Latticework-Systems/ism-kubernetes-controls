@@ -1,0 +1,13 @@
+# Passes check-no-privileged — no privileged securityContext set.
+# Uses an approved registry and a version tag so all three rules pass.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-non-privileged-pass
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp:v1.0
+    securityContext:
+      allowPrivilegeEscalation: false

@@ -1,0 +1,14 @@
+# Any value other than "true" or "false" is rejected — the label must be
+# an explicit declaration, not an arbitrary string.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-wrong-value-prod-fail
+  namespace: production
+  labels:
+    ism.latticework.systems/backup-required: "maybe"
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi

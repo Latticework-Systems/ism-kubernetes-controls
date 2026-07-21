@@ -1,0 +1,12 @@
+# First-wave public rollout bundle.
+# Applies the first ISM-aligned policy wave in Audit mode and removes the
+# default-service-account mutation policy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - policies/application-control/policy.yaml
+  - policies/workload-hardening/policy.yaml
+  - policies/privileged-access/policy.yaml
+patches:
+  - path: overlays/first-wave-audit/patches/remove-default-sa-mutation.yaml
+  - path: overlays/first-wave-audit/patches/audit-failure-action.yaml

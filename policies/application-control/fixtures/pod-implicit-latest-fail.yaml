@@ -1,0 +1,11 @@
+# Fails check-no-implicit-latest-tag — image has no tag and no digest.
+# 'registry.internal/myapp' implicitly pulls ':latest' and is blocked in production.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-implicit-latest-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/myapp

@@ -1,0 +1,11 @@
+# Fails check-approved-registry — quay.io/unapproved is not in the approved list.
+# Uses a version tag to avoid also triggering the no-latest-tag rules.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-unapproved-registry-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: quay.io/unapproved/nginx:1.25

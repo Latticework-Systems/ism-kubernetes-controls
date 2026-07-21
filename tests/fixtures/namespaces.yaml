@@ -1,0 +1,49 @@
+# Shared Namespace fixtures for kyverno test.
+# Every namespaceSelector label combination used across all ISM policies is
+# represented here. Each kyverno-test.yaml references this file via
+# ../../tests/fixtures/namespaces.yaml so the CLI can resolve namespace labels
+# when evaluating namespaceSelector rules.
+#
+# Without these objects in the resources list, namespace-scoped rules silently
+# skip all resources, producing false-passes on expected-fail test cases.
+---
+# production — internet-facing (used by Control 02 14-day stale image rule)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    ism.latticework.systems/environment: production
+    ism.latticework.systems/exposure: internet-facing
+---
+# production-internal — production but NOT internet-facing (used by Control 02
+# 30-day stale image rule; excluded from the 14-day internet-facing rule)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production-internal
+  labels:
+    ism.latticework.systems/environment: production
+---
+# staging — matches all production+staging selectors
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    ism.latticework.systems/environment: staging
+---
+# development — no ISM environment label; no ISM namespaceSelector matches it.
+# Used for "rule does not apply" (skip) test cases.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: development
+  labels:
+    ism.latticework.systems/environment: development
+---
+# kyverno — system namespace; holds the ism-approved-registries ConfigMap
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kyverno

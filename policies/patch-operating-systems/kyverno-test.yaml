@@ -1,0 +1,71 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: ism-patch-operating-systems
+policies:
+  - policy.yaml
+resources:
+  - fixtures/pod-with-base-image-annotation-pass.yaml
+  - fixtures/pod-missing-base-image-annotation-fail.yaml
+  - fixtures/pod-eol-annotation-fail.yaml
+  - fixtures/pod-eol-image-tag-fail.yaml
+  - fixtures/pod-eol-glob-tag-fail.yaml
+  - fixtures/pod-supported-image-tag-pass.yaml
+variables: ../../tests/fixtures/namespace-values.yaml
+results:
+  # ── require-base-image-label ─────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-patch-operating-systems-require-base-image-label
+    rule: require-base-image-label
+    resources:
+      - pod-with-base-image-annotation-pass
+      # EOL annotation value still satisfies 'annotation present' check
+      - pod-eol-annotation-fail
+    result: pass
+
+  - kind: Pod
+    policy: ism-patch-operating-systems-require-base-image-label
+    rule: require-base-image-label
+    resources:
+      - pod-missing-base-image-annotation-fail
+    result: fail
+
+  # ── block-eol-declared-base-image ────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-patch-operating-systems-block-eol-base-images
+    rule: block-eol-declared-base-image
+    resources:
+      - pod-with-base-image-annotation-pass
+    result: pass
+
+  - kind: Pod
+    policy: ism-patch-operating-systems-block-eol-base-images
+    rule: block-eol-declared-base-image
+    resources:
+      - pod-eol-annotation-fail
+    result: fail
+
+  # Annotation absent — precondition fails, rule skips
+  - kind: Pod
+    policy: ism-patch-operating-systems-block-eol-base-images
+    rule: block-eol-declared-base-image
+    resources:
+      - pod-missing-base-image-annotation-fail
+    result: skip
+
+  # ── block-eol-image-tags ─────────────────────────────────────────────────────
+  - kind: Pod
+    policy: ism-patch-operating-systems-block-eol-base-images
+    rule: block-eol-image-tags
+    resources:
+      - pod-eol-image-tag-fail
+      # Glob wildcard: "python:3.8-slim" matches "python:3.8*"
+      - pod-eol-glob-tag-fail
+    result: fail
+
+  - kind: Pod
+    policy: ism-patch-operating-systems-block-eol-base-images
+    rule: block-eol-image-tags
+    resources:
+      - pod-supported-image-tag-pass
+    result: pass

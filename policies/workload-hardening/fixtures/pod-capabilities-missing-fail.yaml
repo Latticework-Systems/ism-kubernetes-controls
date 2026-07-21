@@ -1,0 +1,17 @@
+# Fails require-drop-all-capabilities when capabilities is omitted entirely.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-capabilities-missing-fail
+  namespace: production
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true

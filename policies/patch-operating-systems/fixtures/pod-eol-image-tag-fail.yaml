@@ -1,0 +1,11 @@
+# Fails block-eol-image-tags (global) — image reference is a known EOL base image.
+# Note: this rule is global (no namespaceSelector) so any namespace triggers it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-eol-image-tag-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: ubuntu:18.04

@@ -1,0 +1,11 @@
+# Fails require-base-image-label (Audit) — annotation absent.
+# block-eol-declared-base-image skips (precondition: annotation must be non-empty).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-missing-base-image-annotation-fail
+  namespace: production
+spec:
+  containers:
+  - name: app
+    image: registry.internal/app:v1.0.0

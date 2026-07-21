@@ -1,0 +1,110 @@
+schema_version: "1.0"
+sources:
+  asd_ism_catalog:
+    authority: Australian Signals Directorate
+    version: "2026.06.18"
+    url: https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_catalog.json
+    sha256: f3e4512bc31eb3157001c4a9312d80840b3a3c485f1e87d6b5519b2b0dcc56cc
+  asd_e8_ml2_profile:
+    authority: Australian Signals Directorate
+    version: "2026.06.18"
+    url: https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_E8_ML2-baseline_profile.json
+    sha256: 89940c68a9f9e7bd88612e8a2cc328bad05a31fcaf58833f452c1bb88f23ed43
+  kubescape_regolibrary:
+    repository: https://github.com/kubescape/regolibrary
+    ref: 01f57decc4a771facfb7166f02af986ccb560203
+    archive_sha256: 48407b08bd9cd8e0912fdcad3ed3913f88a081f1ae8ee6c77290dde06c373cbe
+  kubescape_control_inventory:
+    version: "4.0.10"
+    sha256: 3a1d740b933526762cee9640ee858dfc66c8a09677d17fc60250d0f384e6eeb6
+profiles:
+  e8_ml2:
+    source: asd_e8_ml2_profile
+    controls:
+      - ISM-0123
+      - ISM-0140
+      - ISM-0445
+      - ISM-0843
+      - ISM-0974
+      - ISM-1173
+      - ISM-1175
+      - ISM-1228
+      - ISM-1380
+      - ISM-1387
+      - ISM-1401
+      - ISM-1412
+      - ISM-1485
+      - ISM-1486
+      - ISM-1488
+      - ISM-1489
+      - ISM-1490
+      - ISM-1501
+      - ISM-1504
+      - ISM-1507
+      - ISM-1509
+      - ISM-1511
+      - ISM-1515
+      - ISM-1542
+      - ISM-1544
+      - ISM-1582
+      - ISM-1585
+      - ISM-1623
+      - ISM-1647
+      - ISM-1648
+      - ISM-1650
+      - ISM-1654
+      - ISM-1657
+      - ISM-1660
+      - ISM-1667
+      - ISM-1668
+      - ISM-1669
+      - ISM-1670
+      - ISM-1671
+      - ISM-1672
+      - ISM-1673
+      - ISM-1679
+      - ISM-1680
+      - ISM-1681
+      - ISM-1682
+      - ISM-1683
+      - ISM-1685
+      - ISM-1687
+      - ISM-1688
+      - ISM-1689
+      - ISM-1690
+      - ISM-1691
+      - ISM-1693
+      - ISM-1694
+      - ISM-1695
+      - ISM-1698
+      - ISM-1699
+      - ISM-1700
+      - ISM-1701
+      - ISM-1702
+      - ISM-1704
+      - ISM-1705
+      - ISM-1707
+      - ISM-1807
+      - ISM-1808
+      - ISM-1810
+      - ISM-1811
+      - ISM-1812
+      - ISM-1814
+      - ISM-1815
+      - ISM-1819
+      - ISM-1823
+      - ISM-1824
+      - ISM-1859
+      - ISM-1860
+      - ISM-1870
+      - ISM-1871
+      - ISM-1872
+      - ISM-1873
+      - ISM-1876
+      - ISM-1877
+      - ISM-1883
+      - ISM-1889
+      - ISM-1892
+      - ISM-1893
+      - ISM-1905
+      - ISM-1906
