@@ -45,6 +45,19 @@ All mappings are partial evidence unless explicitly stated otherwise. For exampl
 
 Latticework Posture can consume scan and PolicyReport output to provide reporting and workflow. Remediate can turn reviewed findings into GitOps changes. Golden Templates provide reusable, hardened workload implementations. Those products are deliberately outside this public mapping repository.
 
+## Publishing the Kubescape mapping
+
+After a mapping change is reviewed and `main` is green, push a `v*` tag from `main`. The [release workflow](./.github/workflows/release-mapping.yaml) validates the generated view and publishes `kubescape.json` plus its SHA-256 checksum as GitHub release assets.
+
+Enable [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes) for this repository before publishing the first tag. GitHub then locks the tag and assets and produces the release attestation consumed by `ism-kubescape-framework`.
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The companion [`ism-kubescape-framework`](https://github.com/Latticework-Systems/ism-kubescape-framework) verifies and imports a published mapping with `make update-mapping CONTROLS_VERSION=v0.2.0`.
+
 ## Kyverno policy families
 
 | Policy family | Kubernetes evidence | Mapped ISM controls |
