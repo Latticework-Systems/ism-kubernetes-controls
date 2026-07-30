@@ -50,4 +50,8 @@ jobs:
             --verify-tag \
             --generate-notes \
             --title "ISM Kubernetes controls $GITHUB_REF_NAME"
-          gh release verify "$GITHUB_REF_NAME"
+          for attempt in {1..6}; do
+            gh release verify "$GITHUB_REF_NAME" && exit 0
+            [ "$attempt" -eq 6 ] || sleep 5
+          done
+          exit 1
