@@ -26,7 +26,7 @@ jobs:
       - name: Require a tag from main
         run: |
           git fetch origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD
+          test "$(git rev-parse "$GITHUB_SHA^{}")" = "$(git rev-parse FETCH_HEAD)"
 
       - name: Validate mapping
         run: |
@@ -44,12 +44,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            release/kubescape.json \
-            release/kubescape.json.sha256 \
-            --verify-tag \
-            --generate-notes \
-            --title "ISM Kubernetes controls $GITHUB_REF_NAME"
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              release/kubescape.json \
+              release/kubescape.json.sha256 \
+              --verify-tag \
+              --generate-notes \
+              --title "ISM Kubernetes controls $GITHUB_REF_NAME"
+          fi
           for attempt in {1..6}; do
             gh release verify "$GITHUB_REF_NAME" && exit 0
             [ "$attempt" -eq 6 ] || sleep 5
