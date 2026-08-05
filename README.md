@@ -84,7 +84,11 @@ Seventeen `ClusterPolicy` objects provide evidence for 19 ISM controls. Some pol
 
 The root [`kustomization.yaml`](./kustomization.yaml) (applied above in Quick start) is a brownfield-friendly first wave covering `application-control`, `workload-hardening` and `privileged-access` in `Audit` mode, and it omits the default-service-account mutation.
 
-The first wave omits `patch-applications`, `patch-operating-systems` and `backups`. Those families depend on annotations or labels supplied by CI/CD or backup tooling. Add them to your Kustomize configuration after that metadata exists.
+The first wave omits `patch-applications`, `patch-operating-systems` and `backups`. Supply this metadata before adding those families to your Kustomize configuration:
+
+- Namespace labels: `ism.latticework.systems/environment=production`. The OS end-of-life and backup policies also match `staging`. Set `ism.latticework.systems/exposure=internet-facing` to use the 14-day application patch window instead of 30 days. See the [namespace label template](./docs/templates/namespace-labels.yaml).
+- Pod template metadata from CI/CD: annotation `ism.latticework.systems/image-built=<RFC3339 timestamp>`, label `ism.latticework.systems/scan-status=passed`, and annotation `ism.latticework.systems/base-image=<name>:<version>` such as `ubuntu:22.04`. Kubernetes does not copy OCI image labels into Pod metadata.
+- PVC label from backup configuration: `ism.latticework.systems/backup-required=true` or `false`.
 
 ## Scope and assurance boundary
 
