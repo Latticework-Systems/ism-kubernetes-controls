@@ -2,20 +2,25 @@
 
 Contributions that improve mapping accuracy, policy behaviour, fixtures, or evidence boundaries are welcome.
 
-Before opening a pull request:
+## Validate changes locally
 
-1. Run `make mapping-check` after changing mapping data.
-2. Run `make validate` after changing policies or fixtures.
-3. Do not commit cluster evidence, credentials, kubeconfigs, local paths, private endpoints, or customer information.
-4. State the evidence boundary for any compliance-related claim; these controls do not provide certification.
+Install the development dependencies, then run both validation targets:
 
-If a mapping change also affects the companion Kubescape framework, run:
+```bash
+python3 -m pip install -r requirements-dev.txt
+make mapping-check
+make validate
+```
+
+`make mapping-check` validates the canonical mapping and checks its generated views without downloading sources. `make validate` downloads the checksum-pinned Kyverno CLI, renders the first-wave Audit bundle and runs every policy test. Its guard fails detailed `Want ..., got ...` mismatches even when Kyverno returns a successful exit code.
+
+If a mapping change affects the companion Kubescape framework, run:
 
 ```bash
 python3 scripts/validate_mapping.py --framework-repo /path/to/ism-kubescape-framework
 ```
 
-Changes to Kubescape provenance must also resolve against the locked upstream revision. Download the official artifacts named in `mapping/provenance.lock.yaml`, then run:
+Changes to Kubescape provenance must resolve against the upstream revision in [`mapping/provenance.lock.yaml`](./mapping/provenance.lock.yaml). Download the authority files listed there, then run:
 
 ```bash
 python3 scripts/validate_mapping.py \
@@ -25,6 +30,28 @@ python3 scripts/validate_mapping.py \
   --regolibrary /path/to/regolibrary
 ```
 
-The ordinary `make mapping-check` remains offline and performs no download.
+## Pull requests
+
+Before opening a pull request:
+
+1. Do not commit cluster evidence, credentials, kubeconfigs, local paths, private endpoints, or customer information.
+2. State the evidence boundary for any compliance-related claim; these controls do not provide certification.
+
+## Publish the Kubescape mapping
+
+Maintainers publish a mapping after review and a green `main` build. Create a `v*` tag from `main` and push it:
+
+```bash
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+The [release workflow](./.github/workflows/release-mapping.yaml) validates the generated view and publishes `kubescape.json` with its SHA-256 checksum. Enable [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes) before publishing the first tag so GitHub locks the tag and assets and produces the attestation used by `ism-kubescape-framework`.
+
+The companion [`ism-kubescape-framework`](https://github.com/Latticework-Systems/ism-kubescape-framework) verifies and imports a release with:
+
+```bash
+make update-mapping CONTROLS_VERSION=vX.Y.Z
+```
 
 Report suspected vulnerabilities privately as described in [SECURITY.md](./SECURITY.md).
