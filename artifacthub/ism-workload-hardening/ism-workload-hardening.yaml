@@ -1,0 +1,250 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-workload-hardening-security-context
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1246", "ISM-1604"]'
+    policies.kyverno.io/title: 'ISM Workload Hardening: Security Context'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: require-run-as-non-root
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: 'Containers must run as non-root. Set securityContext.runAsNonRoot: true or securityContext.runAsUser
+        > 0 at either pod level (spec.securityContext) or container level. Supports ISM-1246 and ISM-1604;
+        review exceptions against applicable guidance.'
+      anyPattern:
+      - spec:
+          securityContext:
+            runAsNonRoot: 'true'
+          =(initContainers):
+          - =(securityContext):
+              =(runAsNonRoot): 'true'
+          containers:
+          - =(securityContext):
+              =(runAsNonRoot): 'true'
+      - spec:
+          containers:
+          - securityContext:
+              runAsNonRoot: 'true'
+          =(initContainers):
+          - securityContext:
+              runAsNonRoot: 'true'
+      - spec:
+          securityContext:
+            runAsUser: '>0'
+          =(initContainers):
+          - =(securityContext):
+              =(runAsUser): '>0'
+          containers:
+          - =(securityContext):
+              =(runAsUser): '>0'
+      - spec:
+          containers:
+          - securityContext:
+              runAsUser: '>0'
+          =(initContainers):
+          - =(securityContext):
+              =(runAsUser): '>0'
+  - name: require-no-privilege-escalation
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: 'Containers must set allowPrivilegeEscalation: false. Supports ISM-1246 and ISM-1604.'
+      pattern:
+        spec:
+          =(initContainers):
+          - securityContext:
+              allowPrivilegeEscalation: 'false'
+          containers:
+          - securityContext:
+              allowPrivilegeEscalation: 'false'
+  - name: require-drop-all-capabilities
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: 'Containers must drop all Linux capabilities (capabilities.drop: ["ALL"]). Re-add only
+        what your workload specifically requires. Supports ISM-1246 and ISM-1604.'
+      foreach:
+      - list: request.object.spec.initContainers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.capabilities.drop || `[]` }}'
+              operator: AllNotIn
+              value:
+              - ALL
+      - list: request.object.spec.containers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.capabilities.drop || `[]` }}'
+              operator: AllNotIn
+              value:
+              - ALL
+  - name: require-seccomp-profile
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: Containers must have a seccomp profile set (RuntimeDefault or Localhost). Set securityContext.seccompProfile.type
+        at either pod or container level. Supports ISM-1246 and ISM-1604.
+      foreach:
+      - list: request.object.spec.initContainers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.seccompProfile.type || request.object.spec.securityContext.seccompProfile.type
+                || '''' }}'
+              operator: AnyNotIn
+              value:
+              - RuntimeDefault
+              - Localhost
+      - list: request.object.spec.containers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.seccompProfile.type || request.object.spec.securityContext.seccompProfile.type
+                || '''' }}'
+              operator: AnyNotIn
+              value:
+              - RuntimeDefault
+              - Localhost
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-workload-hardening-block-host-namespaces
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1246", "ISM-1604"]'
+    policies.kyverno.io/title: 'ISM Workload Hardening: Block Host Namespaces'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: block-host-namespaces
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: Pods must not use hostPID, hostIPC, or hostNetwork. These grant the container access to
+        the host OS. Supports ISM-1246 and ISM-1604.
+      deny:
+        conditions:
+          any:
+          - key: '{{ request.object.spec.hostPID || false }}'
+            operator: Equals
+            value: true
+          - key: '{{ request.object.spec.hostIPC || false }}'
+            operator: Equals
+            value: true
+          - key: '{{ request.object.spec.hostNetwork || false }}'
+            operator: Equals
+            value: true
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-workload-hardening-block-host-path
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1246", "ISM-1604"]'
+    policies.kyverno.io/title: 'ISM Workload Hardening: Block hostPath Volumes'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/description: hostPath volumes mount directories from the host node's filesystem
+      into a Pod. This grants the container direct access to the host OS filesystem, bypassing container
+      isolation. Block in production.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: block-host-path-volumes
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+              - staging
+    validate:
+      message: hostPath volumes are not permitted in production. They grant containers direct access to
+        the host node's filesystem, bypassing container isolation. Use PersistentVolumeClaims or emptyDir
+        volumes instead. Supports ISM-1246 and ISM-1604.
+      foreach:
+      - list: request.object.spec.volumes
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.hostPath || '''' }}'
+              operator: NotEquals
+              value: ''
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-workload-hardening-require-read-only-rootfs
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1246", "ISM-1604"]'
+    policies.kyverno.io/title: 'ISM Workload Hardening: Read-Only Root Filesystem'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+  - name: require-read-only-rootfs
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+    validate:
+      message: 'Production containers should use a read-only root filesystem. Set securityContext.readOnlyRootFilesystem:
+        true and use emptyDir or PVC mounts for writable paths. Supports ISM-1246 and ISM-1604.'
+      foreach:
+      - list: request.object.spec.initContainers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.readOnlyRootFilesystem || `false` }}'
+              operator: NotEquals
+              value: true
+      - list: request.object.spec.containers
+        deny:
+          conditions:
+            all:
+            - key: '{{ element.securityContext.readOnlyRootFilesystem || `false` }}'
+              operator: NotEquals
+              value: true

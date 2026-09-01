@@ -1,0 +1,39 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-backups-require-pvc-backup-label
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1511"]'
+    policies.kyverno.io/title: 'ISM — Regular Backups: Require PVC Backup Label'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: 'ML2 Control 8: All PersistentVolumeClaims in production must carry
+      a backup classification label so backup tooling can target the correct volumes.'
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: require-backup-label-on-pvc
+    match:
+      any:
+      - resources:
+          kinds:
+          - PersistentVolumeClaim
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+              - staging
+    validate:
+      message: PVCs in production must carry label 'ism.latticework.systems/backup-required' set to 'true'
+        or 'false'. Unlabelled PVCs may be omitted from backup schedules silently. Supports ISM-1511.
+      anyPattern:
+      - metadata:
+          labels:
+            ism.latticework.systems/backup-required: 'true'
+      - metadata:
+          labels:
+            ism.latticework.systems/backup-required: 'false'

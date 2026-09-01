@@ -41,6 +41,7 @@ KYVERNO_SHA256_linux_x86_64 := d0c0f52e8fc8d66a3663b63942b131e5f91b63f7644b3e446
 KYVERNO_SHA256 ?= $(KYVERNO_SHA256_$(UNAME_OS)_$(KYVERNO_ARCH))
 
 .PHONY: install-kyverno validate test mapping-generate mapping-check \
+        artifacthub-generate artifacthub-check \
         test-application-control test-patch-applications test-workload-hardening \
         test-privileged-access test-patch-operating-systems test-backups
 
@@ -95,6 +96,13 @@ mapping-generate:
 mapping-check:
 	python3 scripts/validate_mapping.py
 	python3 scripts/generate_views.py --check
+
+## Regenerate the Artifact Hub package tree from policies/ and the canonical mapping.
+artifacthub-generate:
+	python3 scripts/generate_artifacthub.py
+
+artifacthub-check:
+	python3 scripts/generate_artifacthub.py --check
 
 ## Run tests per policy family.
 test-application-control: install-kyverno
