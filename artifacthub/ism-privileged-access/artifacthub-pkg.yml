@@ -1,0 +1,74 @@
+name: ism-privileged-access
+version: 0.1.0
+displayName: ISM Restrict Administrative Privileges
+createdAt: '2026-08-28T00:00:00Z'
+description: Disables default ServiceAccount token automount, requires production workloads to run under
+  a dedicated ServiceAccount, blocks legacy ServiceAccount token Secrets, and blocks new cluster-admin
+  bindings. Provides partial Kubernetes evidence for Australian Government ISM controls ISM-0445, ISM-1685,
+  ISM-1883.
+license: Apache-2.0
+homeURL: https://github.com/Latticework-Systems/ism-kubernetes-controls
+install: |
+  ```shell
+  kubectl apply -f https://raw.githubusercontent.com/Latticework-Systems/ism-kubernetes-controls/main/artifacthub/ism-privileged-access/ism-privileged-access.yaml
+  ```
+
+  Policies install in Audit mode. Review the resulting PolicyReports for your
+  workloads before switching any policy to Enforce.
+keywords:
+- kyverno
+- ism
+- irap
+- asd
+- australian-government
+- compliance
+- evidence
+- essential-eight
+- privileged-access
+links:
+- name: Source
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/tree/main/policies/privileged-access
+- name: Canonical ISM mapping
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/blob/main/mapping/ism-mapping.yaml
+provider:
+  name: Latticework Systems
+readme: |
+  # ISM Restrict Administrative Privileges
+
+  Disables default ServiceAccount token automount, requires production workloads to run under a dedicated ServiceAccount, blocks legacy ServiceAccount token Secrets, and blocks new cluster-admin bindings.
+
+  ## ISM controls evidenced
+
+  | Control | Coverage | Title |
+  | --- | --- | --- |
+  | ISM-0445 | partial | Privileged users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access. |
+  | ISM-1685 | partial | Credentials for break glass accounts, local administrator accounts and service accounts are long, unique, unpredictable and managed. |
+  | ISM-1883 | partial | Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users and services to undertake their duties. |
+
+  ## Evidence boundary
+
+  Each mapping below is partial evidence. A PolicyReport shows what the cluster
+  admitted. It does not discharge an ISM control, and it is not an assessment.
+
+  - **ISM-0445**: PolicyReports show whether production workloads use dedicated service accounts; they do not prove human privileged-account separation or account governance.
+  - **ISM-1685**: PolicyReports show legacy long-lived service-account token Secrets; they do not assess external secret stores, break-glass credentials or rotation.
+  - **ISM-1883**: RBAC and service-account findings show Kubernetes privilege breadth; they do not prove authorisation workflow, human account lifecycle or external systems.
+
+  ## Policies in this package
+
+  - `ism-privileged-access-mutate-default-sa`: ISM — Restrict Admin: Disable Default SA Automount (severity: high)
+  - `ism-privileged-access-require-dedicated-sa`: ISM — Restrict Admin: Require Dedicated Service Account (severity: medium)
+  - `ism-privileged-access-block-legacy-sa-tokens`: ISM — Restrict Admin: Block Legacy SA Token Secrets (severity: high)
+  - `ism-privileged-access-block-cluster-admin-binding`: ISM — Restrict Admin: Block cluster-admin Bindings (severity: critical)
+
+  ## Notes
+
+  One policy in this family mutates ServiceAccounts. Review `ism-privileged-access-mutate-default-sa` against your workloads before moving it out of Audit.
+
+  The canonical mapping, its ASD OSCAL provenance and the Kyverno test suite are
+  maintained at https://github.com/Latticework-Systems/ism-kubernetes-controls.
+annotations:
+  kyverno/category: ASD ISM
+  kyverno/kubernetesVersion: '1.27'
+  kyverno/subject: ClusterRoleBinding, Pod, ServiceAccount
+  kyverno/version: 1.13.0

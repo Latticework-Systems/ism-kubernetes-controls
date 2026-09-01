@@ -1,0 +1,66 @@
+name: ism-backups
+version: 0.1.0
+displayName: ISM Regular Backups
+createdAt: '2026-08-28T00:00:00Z'
+description: Requires production PersistentVolumeClaims to declare an explicit backup disposition label,
+  so unlabelled storage cannot reach production unnoticed. Provides partial Kubernetes evidence for Australian
+  Government ISM controls ISM-1511.
+license: Apache-2.0
+homeURL: https://github.com/Latticework-Systems/ism-kubernetes-controls
+install: |
+  ```shell
+  kubectl apply -f https://raw.githubusercontent.com/Latticework-Systems/ism-kubernetes-controls/main/artifacthub/ism-backups/ism-backups.yaml
+  ```
+
+  Policies install in Audit mode. Review the resulting PolicyReports for your
+  workloads before switching any policy to Enforce.
+keywords:
+- kyverno
+- ism
+- irap
+- asd
+- australian-government
+- compliance
+- evidence
+- essential-eight
+- backups
+links:
+- name: Source
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/tree/main/policies/backups
+- name: Canonical ISM mapping
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/blob/main/mapping/ism-mapping.yaml
+provider:
+  name: Latticework Systems
+readme: |
+  # ISM Regular Backups
+
+  Requires production PersistentVolumeClaims to declare an explicit backup disposition label, so unlabelled storage cannot reach production unnoticed.
+
+  ## ISM controls evidenced
+
+  | Control | Coverage | Title |
+  | --- | --- | --- |
+  | ISM-1511 | partial | Backups of data, applications and settings are performed and retained in accordance with business criticality and business continuity requirements. |
+
+  ## Evidence boundary
+
+  Each mapping below is partial evidence. A PolicyReport shows what the cluster
+  admitted. It does not discharge an ISM control, and it is not an assessment.
+
+  - **ISM-1511**: PolicyReports show whether production PVCs declare backup coverage; they do not prove backup completion, retention, resilience or restorability.
+
+  ## Policies in this package
+
+  - `ism-backups-require-pvc-backup-label`: ISM — Regular Backups: Require PVC Backup Label (severity: medium)
+
+  ## Notes
+
+  This package ships the admission policy alone. The Velero Schedules, etcd backup reference and monthly restoration-test CronJob that produce the rest of the backup evidence live in the source repository at https://github.com/Latticework-Systems/ism-kubernetes-controls/tree/main/policies/backups.
+
+  The canonical mapping, its ASD OSCAL provenance and the Kyverno test suite are
+  maintained at https://github.com/Latticework-Systems/ism-kubernetes-controls.
+annotations:
+  kyverno/category: ASD ISM
+  kyverno/kubernetesVersion: '1.27'
+  kyverno/subject: Pod
+  kyverno/version: 1.13.0

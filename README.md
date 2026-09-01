@@ -51,6 +51,7 @@ For a brownfield cluster, policies with other names remain in place and keep the
 - [`mapping/views/e8.yaml`](./mapping/views/e8.yaml): a generated Essential Eight ML2 compatibility view. ISM remains the primary model.
 - [`policies/`](./policies/): ISM-aligned Kyverno policies that can audit or enforce selected Kubernetes settings.
 - [`mapping/provenance.lock.yaml`](./mapping/provenance.lock.yaml): pinned ASD OSCAL and upstream Kubescape sources.
+- [`artifacthub/`](./artifacthub/): generated [Artifact Hub](https://artifacthub.io) packages, one per policy family, so the policies are installable from the Kyverno policy catalogue.
 
 The current mapping contains 21 detector-backed ISM controls. Seventeen of those occur in ASD's 87-control Essential Eight ML2 OSCAL profile. The remaining four are full-ISM workload and network controls:
 

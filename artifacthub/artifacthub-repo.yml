@@ -1,0 +1,18 @@
+# Artifact Hub repository metadata.
+#
+# repositoryID claims this repository for the Latticework Systems Artifact Hub
+# account, which earns the "Verified Publisher" badge on every package listed
+# from it. Artifact Hub re-checks the claim the next time it processes the
+# repository. For a git repository that means the next change to the branch
+# head, so this file has to land on main before the badge appears.
+#
+# There is no `owners` section. Artifact Hub reads that section only during an
+# ownership claim, where a publisher takes over a repository someone else
+# added for them. You registered this repository yourself, so it does not apply.
+#
+# Registered as:
+#   Kind:   Kyverno policies
+#   URL:    https://github.com/Latticework-Systems/ism-kubernetes-controls/artifacthub
+#   Branch: main
+---
+repositoryID: 7a70f557-255e-493a-be00-1a58cf94d87f

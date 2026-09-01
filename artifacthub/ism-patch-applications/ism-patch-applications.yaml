@@ -1,0 +1,164 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-patch-applications-require-build-date
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1690", "ISM-1693"]'
+    policies.kyverno.io/title: 'ISM — Patch Applications: Require Build Date Annotation'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: 'ML2 Control 2: Production Pods must carry annotation ''ism.latticework.systems/image-built''
+      with the image build date set by your CI/CD pipeline. This enables patch currency verification.
+      Note: This annotation must be set in the deployment manifest by your pipeline — Kubernetes does
+      not propagate OCI image labels to Pods.'
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+  - name: require-build-date-annotation
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+    validate:
+      message: Pods in production must carry annotation 'ism.latticework.systems/image-built' with the
+        image build date. Your CI/CD pipeline should set this annotation in the deployment manifest (Helm
+        values, kustomize, etc.) when building a new image. Supports the mapped ISM patch and vulnerability
+        controls.
+      pattern:
+        metadata:
+          annotations:
+            ism.latticework.systems/image-built: ?*
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-patch-applications-require-scan-passed
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1698", "ISM-1700", "ISM-1808"]'
+    policies.kyverno.io/title: 'ISM — Patch Applications: Require Vulnerability Scan'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: 'ML2 Control 2: Production Pods must carry label ''ism.latticework.systems/scan-status=passed''
+      set by your CI/CD pipeline after a successful vulnerability scan (Trivy/Grype). This label must
+      be set in the deployment manifest — Kubernetes does not propagate OCI image labels to Pod metadata
+      automatically.'
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: require-scan-passed
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+    validate:
+      message: Production Pods must carry label 'ism.latticework.systems/scan-status=passed'. Your CI/CD
+        pipeline must set this label in the deployment manifest after a clean vulnerability scan result
+        (Trivy or Grype). Supports the mapped ISM patch and vulnerability controls.
+      pattern:
+        metadata:
+          labels:
+            ism.latticework.systems/scan-status: passed
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ism-patch-applications-image-age-gate
+  annotations:
+    latticework.systems/ism-controls: '["ISM-1690", "ISM-1693", "ISM-1876"]'
+    policies.kyverno.io/title: 'ISM — Patch Applications: Image Age Gate'
+    policies.kyverno.io/category: ASD ISM
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: "ML2 Control 2: Block production Pods whose image build date (ism.latticework.systems/image-built\
+      \ annotation) exceeds the ML2 patch window. Two rules enforce two windows:\n  - Internet-facing\
+      \ namespaces (label ism.latticework.systems/exposure=internet-facing): 14 days\n  - All other production\
+      \ namespaces: 30 days\nRequires CI pipeline to set ism.latticework.systems/image-built annotation."
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+  - name: block-stale-images-internet-facing
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+            - key: ism.latticework.systems/exposure
+              operator: In
+              values:
+              - internet-facing
+    preconditions:
+      all:
+      - key: '{{ request.object.metadata.annotations."ism.latticework.systems/image-built" || '''' }}'
+        operator: NotEquals
+        value: ''
+    validate:
+      message: Image build date '{{ request.object.metadata.annotations."ism.latticework.systems/image-built"
+        }}' exceeds the ML2 patch window for internet-facing services (14 days). Rebuild and redeploy
+        your image with updated dependencies. Supports the mapped ISM patch and vulnerability controls.
+      deny:
+        conditions:
+          all:
+          - key: '{{ time_since('''', request.object.metadata.annotations."ism.latticework.systems/image-built",
+              '''') }}'
+            operator: GreaterThan
+            value: 336h
+  - name: block-stale-images-non-internet-facing
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/environment
+              operator: In
+              values:
+              - production
+    exclude:
+      any:
+      - resources:
+          namespaceSelector:
+            matchExpressions:
+            - key: ism.latticework.systems/exposure
+              operator: In
+              values:
+              - internet-facing
+    preconditions:
+      all:
+      - key: '{{ request.object.metadata.annotations."ism.latticework.systems/image-built" || '''' }}'
+        operator: NotEquals
+        value: ''
+    validate:
+      message: Image build date '{{ request.object.metadata.annotations."ism.latticework.systems/image-built"
+        }}' exceeds the ML2 patch window (30 days for non-internet-facing). Rebuild and redeploy your
+        image with updated dependencies. Supports the mapped ISM patch and vulnerability controls.
+      deny:
+        conditions:
+          all:
+          - key: '{{ time_since('''', request.object.metadata.annotations."ism.latticework.systems/image-built",
+              '''') }}'
+            operator: GreaterThan
+            value: 720h

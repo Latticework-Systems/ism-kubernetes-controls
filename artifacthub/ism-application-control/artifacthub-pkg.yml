@@ -1,0 +1,72 @@
+name: ism-application-control
+version: 0.1.0
+displayName: ISM Application Control
+createdAt: '2026-08-28T00:00:00Z'
+description: Restricts workloads to images from an approved registry list, blocks mutable 'latest' tags,
+  and blocks privileged containers and the SYS_ADMIN capability. Provides partial Kubernetes evidence
+  for Australian Government ISM controls ISM-1490, ISM-1657, ISM-1871.
+license: Apache-2.0
+homeURL: https://github.com/Latticework-Systems/ism-kubernetes-controls
+install: |
+  ```shell
+  kubectl apply -f https://raw.githubusercontent.com/Latticework-Systems/ism-kubernetes-controls/main/artifacthub/ism-application-control/ism-application-control.yaml
+  ```
+
+  Policies install in Audit mode. Review the resulting PolicyReports for your
+  workloads before switching any policy to Enforce.
+keywords:
+- kyverno
+- ism
+- irap
+- asd
+- australian-government
+- compliance
+- evidence
+- essential-eight
+- application-control
+links:
+- name: Source
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/tree/main/policies/application-control
+- name: Canonical ISM mapping
+  url: https://github.com/Latticework-Systems/ism-kubernetes-controls/blob/main/mapping/ism-mapping.yaml
+provider:
+  name: Latticework Systems
+readme: |
+  # ISM Application Control
+
+  Restricts workloads to images from an approved registry list, blocks mutable 'latest' tags, and blocks privileged containers and the SYS_ADMIN capability.
+
+  ## ISM controls evidenced
+
+  | Control | Coverage | Title |
+  | --- | --- | --- |
+  | ISM-1490 | partial | Application control is implemented on internet-facing servers. |
+  | ISM-1657 | partial | Application control restricts the execution of executables, libraries, scripts, installers, compiled HTML, HTML applications and control panel applets to an organisation-approved set. |
+  | ISM-1871 | partial | Application control is applied to all locations other than user profiles and temporary folders used by operating systems, web browsers and email clients. |
+
+  ## Evidence boundary
+
+  Each mapping below is partial evidence. A PolicyReport shows what the cluster
+  admitted. It does not discharge an ISM control, and it is not an assessment.
+
+  - **ISM-1490**: Scan and PolicyReport results show workload image and execution guardrails on Kubernetes servers; they do not prove host or endpoint application control.
+  - **ISM-1657**: Approved-image and workload-execution findings evidence the Kubernetes translation of application control; they do not inspect binaries inside images.
+  - **ISM-1871**: Cluster-wide workload findings show whether the Kubernetes translation is applied across scanned namespaces; they do not assess host filesystem locations.
+
+  ## Policies in this package
+
+  - `ism-application-control-approved-registry`: ISM — Application Control: Approved Registry (severity: high)
+  - `ism-application-control-no-latest-tag`: ISM — Application Control: No Latest Tag (severity: high)
+  - `ism-application-control-no-privileged`: ISM — Application Control: No Privileged Containers (severity: critical)
+
+  ## Notes
+
+  The approved registry list is read at admission time from the `ism-approved-registries` ConfigMap. The package leaves that ConfigMap to you. Create it in the `kyverno` namespace before enforcing. See https://github.com/Latticework-Systems/ism-kubernetes-controls/blob/main/policies/application-control/policy.yaml.
+
+  The canonical mapping, its ASD OSCAL provenance and the Kyverno test suite are
+  maintained at https://github.com/Latticework-Systems/ism-kubernetes-controls.
+annotations:
+  kyverno/category: ASD ISM
+  kyverno/kubernetesVersion: '1.27'
+  kyverno/subject: Pod
+  kyverno/version: 1.13.0
