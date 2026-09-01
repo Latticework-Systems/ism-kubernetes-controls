@@ -4,14 +4,14 @@
 Artifact Hub indexes a directory tree: each package is one directory holding an
 `artifacthub-pkg.yml` alongside the manifests it installs. This script projects
 `policies/<family>/policy.yaml` into that layout under `artifacthub/`, keeping
-only the Kyverno objects (Velero, CronJob and ConfigMap objects in a family are
-installed from the source tree, not from Artifact Hub).
+only the Kyverno objects. Install the Velero, CronJob and ConfigMap objects
+from the source tree instead; they need site-specific configuration first.
 
-Package descriptions and readmes are derived from `mapping/ism-mapping.yaml`, so
-the listed ISM controls, coverage and evidence boundaries can never drift from
-the canonical mapping. Package versions and creation dates are pinned in
-PACKAGES below and bumped by hand on a policy change, as Artifact Hub requires
-a monotonic semver per package.
+Descriptions and readmes come from `mapping/ism-mapping.yaml`, so the ISM
+controls, coverage and evidence boundaries a package lists stay tied to the
+canonical mapping. Pin each package version and creation date in PACKAGES
+below, and bump the version by hand when you change a policy: Artifact Hub
+requires a monotonic semver per package.
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ RAW_URL = "https://raw.githubusercontent.com/Latticework-Systems/ism-kubernetes-
 KUBERNETES_VERSION = "1.27"
 KYVERNO_VERSION = "1.13.0"
 
-# family -> package metadata. version is bumped by hand when the family's
-# policies change; createdAt is the first publication date and never changes.
+# family -> package metadata. Bump version by hand when the family's policies
+# change. createdAt is the first publication date; leave it alone.
 PACKAGES = {
     "application-control": {
         "version": "0.1.0",
@@ -45,8 +45,8 @@ PACKAGES = {
         ),
         "extra": (
             "The approved registry list is read at admission time from the "
-            "`ism-approved-registries` ConfigMap, which is not shipped in this package. "
-            "Create it in the `kyverno` namespace before enforcing — see "
+            "`ism-approved-registries` ConfigMap. The package leaves that ConfigMap to "
+            "you. Create it in the `kyverno` namespace before enforcing. See "
             f"{REPO_URL}/blob/main/policies/application-control/policy.yaml."
         ),
     },
@@ -59,9 +59,9 @@ PACKAGES = {
             "disposition label, so unlabelled storage cannot reach production unnoticed."
         ),
         "extra": (
-            "This package ships the admission policy only. The Velero Schedules, etcd "
-            "backup reference and the monthly restoration-test CronJob that produce the "
-            "rest of the backup evidence live in the source repository at "
+            "This package ships the admission policy alone. The Velero Schedules, etcd "
+            "backup reference and monthly restoration-test CronJob that produce the rest "
+            "of the backup evidence live in the source repository at "
             f"{REPO_URL}/tree/main/policies/backups."
         ),
     },
@@ -74,9 +74,9 @@ PACKAGES = {
             "scan result, and gates internet-facing workloads on image age."
         ),
         "extra": (
-            "The policies read annotations your build pipeline is expected to stamp onto "
-            "workloads. They evidence that the pipeline ran, not that the scanner was "
-            "correct or that its findings were remediated."
+            "Your build pipeline stamps the annotations these policies read. A pass "
+            "shows the pipeline ran. It says nothing about whether the scanner was "
+            "right or whether anyone fixed what it found."
         ),
     },
     "patch-operating-systems": {
@@ -88,8 +88,8 @@ PACKAGES = {
             "distribution has reached end of life."
         ),
         "extra": (
-            "The end-of-life list is held in the policy and must be reviewed as "
-            "distributions reach end of support."
+            "The policy carries the end-of-life list. Review it as distributions "
+            "reach end of support."
         ),
     },
     "privileged-access": {
@@ -116,8 +116,8 @@ PACKAGES = {
             "sharing and hostPath volumes, and requires a read-only root filesystem."
         ),
         "extra": (
-            "hostPath is blocked in production namespaces only, so platform components "
-            "that legitimately need it can be scoped out by namespace label."
+            "The hostPath policy applies to production namespaces only. Scope out "
+            "platform components that need hostPath by namespace label."
         ),
     },
 }
@@ -193,13 +193,12 @@ def render_readme(meta: dict, policies: list[dict], controls: list[dict]) -> str
         "",
         "## Evidence boundary",
         "",
-        "Every mapping in this package is partial evidence unless stated otherwise. A",
-        "PolicyReport shows what the cluster admitted; it does not by itself discharge",
-        "an ISM control or constitute an assessment.",
+        "Each mapping below is partial evidence. A PolicyReport shows what the cluster",
+        "admitted. It does not discharge an ISM control, and it is not an assessment.",
         "",
     ]
     for control in controls:
-        lines.append(f"- **{control['ism_id']}** — {control['evidence_note']}")
+        lines.append(f"- **{control['ism_id']}**: {control['evidence_note']}")
     lines += [
         "",
         "## Policies in this package",
@@ -209,7 +208,7 @@ def render_readme(meta: dict, policies: list[dict], controls: list[dict]) -> str
         annotations = policy["metadata"].get("annotations", {})
         title = annotations.get("policies.kyverno.io/title", policy["metadata"]["name"])
         severity = annotations.get("policies.kyverno.io/severity", "unspecified")
-        lines.append(f"- `{policy['metadata']['name']}` — {title} (severity: {severity})")
+        lines.append(f"- `{policy['metadata']['name']}`: {title} (severity: {severity})")
     lines += [
         "",
         "## Notes",

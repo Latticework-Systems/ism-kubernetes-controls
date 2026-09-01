@@ -47,20 +47,19 @@ readme: |
 
   ## Evidence boundary
 
-  Every mapping in this package is partial evidence unless stated otherwise. A
-  PolicyReport shows what the cluster admitted; it does not by itself discharge
-  an ISM control or constitute an assessment.
+  Each mapping below is partial evidence. A PolicyReport shows what the cluster
+  admitted. It does not discharge an ISM control, and it is not an assessment.
 
-  - **ISM-0445** — PolicyReports show whether production workloads use dedicated service accounts; they do not prove human privileged-account separation or account governance.
-  - **ISM-1685** — PolicyReports show legacy long-lived service-account token Secrets; they do not assess external secret stores, break-glass credentials or rotation.
-  - **ISM-1883** — RBAC and service-account findings show Kubernetes privilege breadth; they do not prove authorisation workflow, human account lifecycle or external systems.
+  - **ISM-0445**: PolicyReports show whether production workloads use dedicated service accounts; they do not prove human privileged-account separation or account governance.
+  - **ISM-1685**: PolicyReports show legacy long-lived service-account token Secrets; they do not assess external secret stores, break-glass credentials or rotation.
+  - **ISM-1883**: RBAC and service-account findings show Kubernetes privilege breadth; they do not prove authorisation workflow, human account lifecycle or external systems.
 
   ## Policies in this package
 
-  - `ism-privileged-access-mutate-default-sa` — ISM — Restrict Admin: Disable Default SA Automount (severity: high)
-  - `ism-privileged-access-require-dedicated-sa` — ISM — Restrict Admin: Require Dedicated Service Account (severity: medium)
-  - `ism-privileged-access-block-legacy-sa-tokens` — ISM — Restrict Admin: Block Legacy SA Token Secrets (severity: high)
-  - `ism-privileged-access-block-cluster-admin-binding` — ISM — Restrict Admin: Block cluster-admin Bindings (severity: critical)
+  - `ism-privileged-access-mutate-default-sa`: ISM — Restrict Admin: Disable Default SA Automount (severity: high)
+  - `ism-privileged-access-require-dedicated-sa`: ISM — Restrict Admin: Require Dedicated Service Account (severity: medium)
+  - `ism-privileged-access-block-legacy-sa-tokens`: ISM — Restrict Admin: Block Legacy SA Token Secrets (severity: high)
+  - `ism-privileged-access-block-cluster-admin-binding`: ISM — Restrict Admin: Block cluster-admin Bindings (severity: critical)
 
   ## Notes
 

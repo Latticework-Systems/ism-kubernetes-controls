@@ -49,26 +49,25 @@ readme: |
 
   ## Evidence boundary
 
-  Every mapping in this package is partial evidence unless stated otherwise. A
-  PolicyReport shows what the cluster admitted; it does not by itself discharge
-  an ISM control or constitute an assessment.
+  Each mapping below is partial evidence. A PolicyReport shows what the cluster
+  admitted. It does not discharge an ISM control, and it is not an assessment.
 
-  - **ISM-1690** — PolicyReports show declared image build age at admission; they do not prove the image includes every applicable vendor patch.
-  - **ISM-1693** — PolicyReports show declared image build age at admission; they do not prove dependency-level remediation or the vendor release date.
-  - **ISM-1698** — PolicyReports show a declared successful image scan at admission; they do not prove scanner cadence, coverage or current vulnerability data.
-  - **ISM-1700** — PolicyReports show a declared successful image scan at admission; they do not prove fortnightly cadence or dependency-level scan coverage.
-  - **ISM-1808** — PolicyReports show only the workload's declared scan result; scanner identity, database freshness and scan configuration require pipeline evidence.
-  - **ISM-1876** — Admission-time image age is supporting evidence only; criticality, exploit status and the 48-hour remediation clock require vulnerability pipeline data.
+  - **ISM-1690**: PolicyReports show declared image build age at admission; they do not prove the image includes every applicable vendor patch.
+  - **ISM-1693**: PolicyReports show declared image build age at admission; they do not prove dependency-level remediation or the vendor release date.
+  - **ISM-1698**: PolicyReports show a declared successful image scan at admission; they do not prove scanner cadence, coverage or current vulnerability data.
+  - **ISM-1700**: PolicyReports show a declared successful image scan at admission; they do not prove fortnightly cadence or dependency-level scan coverage.
+  - **ISM-1808**: PolicyReports show only the workload's declared scan result; scanner identity, database freshness and scan configuration require pipeline evidence.
+  - **ISM-1876**: Admission-time image age is supporting evidence only; criticality, exploit status and the 48-hour remediation clock require vulnerability pipeline data.
 
   ## Policies in this package
 
-  - `ism-patch-applications-require-build-date` — ISM — Patch Applications: Require Build Date Annotation (severity: high)
-  - `ism-patch-applications-require-scan-passed` — ISM — Patch Applications: Require Vulnerability Scan (severity: high)
-  - `ism-patch-applications-image-age-gate` — ISM — Patch Applications: Image Age Gate (severity: high)
+  - `ism-patch-applications-require-build-date`: ISM — Patch Applications: Require Build Date Annotation (severity: high)
+  - `ism-patch-applications-require-scan-passed`: ISM — Patch Applications: Require Vulnerability Scan (severity: high)
+  - `ism-patch-applications-image-age-gate`: ISM — Patch Applications: Image Age Gate (severity: high)
 
   ## Notes
 
-  The policies read annotations your build pipeline is expected to stamp onto workloads. They evidence that the pipeline ran, not that the scanner was correct or that its findings were remediated.
+  Your build pipeline stamps the annotations these policies read. A pass shows the pipeline ran. It says nothing about whether the scanner was right or whether anyone fixed what it found.
 
   The canonical mapping, its ASD OSCAL provenance and the Kyverno test suite are
   maintained at https://github.com/Latticework-Systems/ism-kubernetes-controls.
