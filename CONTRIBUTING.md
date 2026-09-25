@@ -2,6 +2,17 @@
 
 Contributions that improve mapping accuracy, policy behaviour, fixtures, or evidence boundaries are welcome.
 
+## Install the commit hooks
+
+The hooks scan staged changes for secrets with Gitleaks and block provider assessment packs, spreadsheets, PDFs and anything under `.private/` or `docs/private/`:
+
+```bash
+python3 -m pip install pre-commit
+pre-commit install
+```
+
+CI also runs TruffleHog on every push and pull request.
+
 ## Validate changes locally
 
 Install the development dependencies, then run both validation targets:

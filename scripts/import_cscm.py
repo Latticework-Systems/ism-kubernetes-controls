@@ -120,7 +120,7 @@ def flag(control: dict, provider: dict | None, platform: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("cscm", type=Path, help="customer-supplied CSCM workbook (.xlsx)")
-    parser.add_argument("--out", type=Path, required=True, help="private CSV output; keep out of git")
+    parser.add_argument("--out", type=Path, required=True, help="private CSV output, outside the repository or under .private/")
     parser.add_argument("--sheet", default="CCM")
     parser.add_argument("--platform", choices=["eks-ec2", "eks-fargate"], default="eks-ec2")
     parser.add_argument("--coverage", type=Path, default=COVERAGE)
@@ -131,8 +131,8 @@ def main() -> int:
         raise SystemExit("--catalog and --classification must be used together")
 
     out = args.out.resolve()
-    if out.is_relative_to(ROOT) and not out.is_relative_to(ROOT / ".orca/private"):
-        raise SystemExit("write the joined matrix outside the repository, or under .orca/private/, so it is never committed")
+    if out.is_relative_to(ROOT) and not out.is_relative_to(ROOT / ".private"):
+        raise SystemExit("write the joined matrix outside the repository, or under .private/, so it is never committed")
 
     provider = read_cscm(args.cscm, args.sheet)
     census = {control["ism_id"]: control for control in yaml.safe_load(args.coverage.read_text())["controls"]}
