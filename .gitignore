@@ -5,6 +5,7 @@
 .env.*
 evidence/
 .tools/
+.venv/
 .claude/
 tmp/
 dist/
@@ -12,3 +13,10 @@ dist/
 talosconfig*
 __pycache__/
 *.pyc
+
+# Local workspace tooling
+.orca/
+
+# Private material: provider assessment packs, joined matrices, planning notes. Never commit.
+.private/
+docs/private/

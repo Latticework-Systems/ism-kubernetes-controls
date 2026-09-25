@@ -22,7 +22,8 @@ jobs:
       - run: make mapping-check
       - name: Prove deterministic generation
         run: |
-          python scripts/generate_views.py --output /tmp/e8-first.yaml --kubescape-output /tmp/kubescape-first.json
-          python scripts/generate_views.py --output /tmp/e8-second.yaml --kubescape-output /tmp/kubescape-second.json
+          python scripts/generate_views.py --output /tmp/e8-first.yaml --kubescape-output /tmp/kubescape-first.json --coverage-output /tmp/coverage-first.md
+          python scripts/generate_views.py --output /tmp/e8-second.yaml --kubescape-output /tmp/kubescape-second.json --coverage-output /tmp/coverage-second.md
           cmp /tmp/e8-first.yaml /tmp/e8-second.yaml
           cmp /tmp/kubescape-first.json /tmp/kubescape-second.json
+          cmp /tmp/coverage-first.md /tmp/coverage-second.md

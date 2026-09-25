@@ -203,6 +203,43 @@ def validate_embedded_ids(data: dict, framework_repo: Path | None) -> None:
         raise SystemExit("embedded ISM metadata differs from mapping:\n" + "\n".join(mismatches))
 
 
+def validate_coverage(data: dict, coverage: dict, schema: dict, lock: dict, catalog_path: Path | None) -> int:
+    errors = [
+        f"coverage schema: {'/'.join(map(str, error.path))}: {error.message}"
+        for error in sorted(Draft202012Validator(schema).iter_errors(coverage), key=lambda error: list(error.path))
+    ]
+    if errors:
+        raise SystemExit("\n".join(errors))
+    if coverage["ism_release"] != data["ism_release"]:
+        raise SystemExit("coverage and mapping must use the same ISM release")
+
+    ids = [control["ism_id"] for control in coverage["controls"]]
+    if ids != sorted(ids) or len(ids) != len(set(ids)):
+        raise SystemExit("coverage controls must have unique ISM IDs in sorted order")
+
+    automated = {control["ism_id"] for control in coverage["controls"] if control["coverage"] == "automated"}
+    mapped = {control["ism_id"] for control in data["controls"]}
+    if automated != mapped:
+        raise SystemExit(
+            "coverage 'automated' must equal the detector-backed mapping controls: "
+            f"missing {sorted(mapped - automated)}, without detector {sorted(automated - mapped)}"
+        )
+    missing_profile = sorted(set(lock["profiles"]["e8_ml2"]["controls"]) - set(ids))
+    if missing_profile:
+        raise SystemExit(f"coverage is missing locked E8 ML2 controls: {missing_profile}")
+
+    if catalog_path:
+        catalog = catalog_controls(json.loads(catalog_path.read_text()))
+        mismatches = [
+            control["ism_id"]
+            for control in coverage["controls"]
+            if not catalog.get(control["ism_id"]) or statement(catalog[control["ism_id"]]) != control["title"]
+        ]
+        if mismatches:
+            raise SystemExit(f"coverage titles absent from or different to the ASD catalog: {mismatches}")
+    return len(ids)
+
+
 def format_keys(values: set[tuple[str, str]]) -> str:
     return ", ".join(f"{engine}:{name}" for engine, name in sorted(values))
 
@@ -211,6 +248,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mapping", type=Path, default=ROOT / "mapping/ism-mapping.yaml")
     parser.add_argument("--schema", type=Path, default=ROOT / "mapping/schema/ism-mapping.schema.json")
+    parser.add_argument("--coverage", type=Path, default=ROOT / "mapping/coverage.yaml")
+    parser.add_argument("--coverage-schema", type=Path, default=ROOT / "mapping/schema/coverage.schema.json")
     parser.add_argument("--provenance-lock", type=Path, default=DEFAULT_LOCK)
     parser.add_argument("--framework-repo", type=Path)
     parser.add_argument("--asd-catalog", type=Path)
@@ -258,13 +297,21 @@ def main() -> int:
         raise SystemExit(f"unknown checks in mapping: {format_keys(stale)}")
 
     validate_embedded_ids(data, args.framework_repo)
+    census = validate_coverage(
+        data,
+        yaml.safe_load(args.coverage.read_text()),
+        json.loads(args.coverage_schema.read_text()),
+        lock,
+        args.asd_catalog,
+    )
 
     profile_ids = set(lock["profiles"]["e8_ml2"]["controls"])
     profile_total = len(profile_ids)
     profile_mapped = len(profile_ids & set(ids))
     print(
         f"valid: {len(ids)} detector-backed ISM controls; {profile_mapped} of {profile_total} in the locked E8 ML2 profile, "
-        f"{len(mapped)} mapped checks, {len(unmapped)} explicitly unmapped checks"
+        f"{len(mapped)} mapped checks, {len(unmapped)} explicitly unmapped checks, "
+        f"{census} controls in the coverage census"
     )
     return 0
 

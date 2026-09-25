@@ -10,6 +10,7 @@ Use either part on its own:
 
 1. **Reference mapping.** [`mapping/ism-mapping.yaml`](./mapping/ism-mapping.yaml) is the canonical, machine-readable statement of which ISM controls have Kubernetes-observable evidence, what that evidence is, and its exact boundary.
 2. **Deployable Kyverno policies.** [`policies/`](./policies/) contains `ClusterPolicy` manifests that collect that evidence from your cluster.
+3. **Coverage census.** [`mapping/coverage.yaml`](./mapping/coverage.yaml) lists every ISM control reviewed for Kubernetes platforms, including those with no detector: where the evidence lives, how far this project produces it, and which collector would. [`mapping/views/coverage-matrix.md`](./mapping/views/coverage-matrix.md) is the generated summary.
 
 ### Quick start
 
@@ -49,6 +50,9 @@ For a brownfield cluster, policies with other names remain in place and keep the
 - [`mapping/ism-mapping.yaml`](./mapping/ism-mapping.yaml): the hand-maintained canonical mapping, including evidence boundaries and pinned Kubescape provenance.
 - [`mapping/views/kubescape.json`](./mapping/views/kubescape.json): generated input for the companion `ism-kubescape-framework` repository.
 - [`mapping/views/e8.yaml`](./mapping/views/e8.yaml): a generated Essential Eight ML2 compatibility view. ISM remains the primary model.
+- [`mapping/coverage.yaml`](./mapping/coverage.yaml): the hand-maintained coverage census of 131 reviewed controls. Its `automated` rows must match the detector-backed mapping exactly.
+- [`mapping/views/coverage-matrix.md`](./mapping/views/coverage-matrix.md): the generated census matrix by evidence layer and coverage state.
+- [`scripts/import_cscm.py`](./scripts/import_cscm.py): joins your cloud provider's IRAP controls matrix to the census, as described below.
 - [`policies/`](./policies/): ISM-aligned Kyverno policies that can audit or enforce selected Kubernetes settings.
 - [`mapping/provenance.lock.yaml`](./mapping/provenance.lock.yaml): pinned ASD OSCAL and upstream Kubescape sources.
 - [`artifacthub/`](./artifacthub/): generated [Artifact Hub](https://artifacthub.io) packages, one per policy family, so the policies are installable from the Kyverno policy catalogue.
@@ -61,6 +65,23 @@ The current mapping contains 21 detector-backed ISM controls. Seventeen of those
 - ISM-1604: shared software isolation mechanisms are hardened.
 
 Each mapping states its evidence boundary. For example, a NetworkPolicy finding can show whether ingress and egress policies select a workload. An assessor must establish that the policy matches business need and that the cluster network plugin enforces it.
+
+## Triage your controls against your cloud provider
+
+IRAP-assessed cloud providers publish a controls matrix (CSCM) that allocates each ISM control to the provider, the customer or both. AWS customers download the IRAP package from AWS Artifact; the CSCM spreadsheet is an attachment inside its PDF, so save it from the PDF viewer's attachments pane. The matrix is confidential to your organisation, so the script reads your copy locally and writes a CSV outside the repository or under the ignored `.private/` directory:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt openpyxl
+mkdir -p .private   # put your CSCM spreadsheet here
+curl -sSfL -o .private/ISM_catalog.json \
+  https://raw.githubusercontent.com/AustralianCyberSecurityCentre/ism-oscal/v2026.06.18/ISM_catalog.json
+.venv/bin/python scripts/import_cscm.py .private/your-cscm.xlsx \
+  --catalog .private/ISM_catalog.json --classification P \
+  --out .private/triage.csv
+```
+
+With `--catalog` (the ASD catalogue pinned in [`mapping/provenance.lock.yaml`](./mapping/provenance.lock.yaml)) and `--classification`, every numbered control applicable at that classification is labelled inherited, provider-not-applicable, customer or not-in-provider-matrix, with this project's evidence layer and coverage where the census has them. Without them, the output covers only the census. `--platform eks-fargate` moves the node layer to the provider. Treat the result as a starting point for your own applicability decisions, not a statement of them.
 
 ## How the repositories fit together
 
@@ -97,6 +118,6 @@ Kubernetes provides technical evidence for part of the ISM. These checks cannot 
 
 Use the exact `evidence_note` attached to each mapping when presenting a result. A passing check means only that the scanned object satisfied that detector at that time.
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local validation, provenance review and Kubescape mapping releases.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for commit hooks, local validation, provenance review and Kubescape mapping releases.
 
 Licensed under Apache-2.0. Report security issues using [`SECURITY.md`](./SECURITY.md).
