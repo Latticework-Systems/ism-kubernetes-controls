@@ -21,6 +21,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import warnings
 
 import yaml
 
@@ -44,6 +45,8 @@ def read_cscm(path: Path, sheet: str) -> dict[str, dict[str, str]]:
     except ImportError as error:
         raise SystemExit("import_cscm.py requires openpyxl: python3 -m pip install openpyxl") from error
 
+    # Provider workbooks use Excel data validation, which openpyxl drops with a warning; only values are read.
+    warnings.filterwarnings("ignore", message="Data Validation extension is not supported", module="openpyxl")
     workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
     if sheet not in workbook.sheetnames:
         raise SystemExit(f"{path} has no sheet {sheet!r}; found {workbook.sheetnames}")

@@ -5,6 +5,7 @@
 .env.*
 evidence/
 .tools/
+.venv/
 .claude/
 tmp/
 dist/

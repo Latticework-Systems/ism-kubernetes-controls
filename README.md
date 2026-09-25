@@ -68,12 +68,16 @@ Each mapping states its evidence boundary. For example, a NetworkPolicy finding 
 
 ## Triage your controls against your cloud provider
 
-IRAP-assessed cloud providers publish a controls matrix (CSCM) that allocates each ISM control to the provider, the customer or both. AWS customers download theirs from AWS Artifact. The matrix is confidential to your organisation, so the script reads your copy locally and writes a CSV outside the repository or under the ignored `.private/` directory:
+IRAP-assessed cloud providers publish a controls matrix (CSCM) that allocates each ISM control to the provider, the customer or both. AWS customers download the IRAP package from AWS Artifact; the CSCM spreadsheet is an attachment inside its PDF, so save it from the PDF viewer's attachments pane. The matrix is confidential to your organisation, so the script reads your copy locally and writes a CSV outside the repository or under the ignored `.private/` directory:
 
 ```bash
-python3 -m pip install openpyxl
-python3 scripts/import_cscm.py /path/to/your-cscm.xlsx \
-  --catalog /path/to/ISM_catalog.json --classification P \
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt openpyxl
+mkdir -p .private   # put your CSCM spreadsheet here
+curl -sSfL -o .private/ISM_catalog.json \
+  https://raw.githubusercontent.com/AustralianCyberSecurityCentre/ism-oscal/v2026.06.18/ISM_catalog.json
+.venv/bin/python scripts/import_cscm.py .private/your-cscm.xlsx \
+  --catalog .private/ISM_catalog.json --classification P \
   --out .private/triage.csv
 ```
 
