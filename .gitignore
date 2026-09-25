@@ -12,3 +12,10 @@ dist/
 talosconfig*
 __pycache__/
 *.pyc
+
+# Private assessment packs (AWS Artifact, CSCM) — never commit
+.orca/drops/
+.orca/private/
+
+# Internal planning documents — never commit
+docs/private/

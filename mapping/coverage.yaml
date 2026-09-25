@@ -1,0 +1,1347 @@
+# Canonical coverage census: every ISM control this project has reviewed for
+# Kubernetes platforms, including controls with no detector.
+#
+# Detectors live in ism-mapping.yaml. This file records where each control's
+# evidence lives (layers), how far this project can produce it (coverage) and
+# which collector would produce it (collectors). Responsibility between the
+# customer and the cloud provider is not recorded here: join it at run time
+# from the customer's own provider controls matrix (scripts/import_cscm.py).
+#
+# A `node` layer moves to the provider on EKS Fargate.
+schema_version: "1.0"
+ism_release: "2026-06"
+generated: false
+controls:
+  - ism_id: ISM-0041
+    title: >-
+      Systems have a system security plan that includes an overview of the system (covering the
+      system’s purpose, the system boundary and how the system is managed) as well as an annex that
+      covers applicable controls from this document and any additional controls that have been
+      identified and implemented.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-0043
+    title: |-
+      Systems have a cyber security incident response plan that covers the following:
+
+      - guidelines on what constitutes a cyber security incident
+      - the types of cyber security incidents likely to be encountered and the expected response to each type
+      - how to report cyber security incidents, internally to an organisation and externally to relevant authorities
+      - other parties that need to be informed in the event of a cyber security incident
+      - the authority, or authorities, responsible for investigating and responding to cyber security incidents
+      - the criteria by which an investigation of a cyber security incident would be requested from a law enforcement agency, the Australian Signals Directorate or other relevant authority
+      - the steps necessary to ensure the integrity of evidence relating to a cyber security incident
+      - system contingency measures or a reference to such details if they are in a separate document.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-0123
+    title: >-
+      Cyber security incidents are reported to the chief information security officer, or one of
+      their delegates, as soon as possible after they occur or are discovered.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Incident notification/response execution requires incident records and accountable
+      organisational staff; API configuration cannot prove it.
+
+  - ism_id: ISM-0140
+    title: >-
+      Cyber security incidents are reported to ASD as soon as possible after they occur or are
+      discovered.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Incident notification/response execution requires incident records and accountable
+      organisational staff; API configuration cannot prove it.
+
+  - ism_id: ISM-0298
+    title: >-
+      A centralised and managed approach that maintains the integrity of patches or updates, and
+      confirms that they have been applied successfully, is used to patch or update applications,
+      operating systems, drivers and firmware.
+    coverage: buildable
+    layers: [node]
+    collectors: [node-inventory]
+    rationale: >-
+      Node patch/support inventory and successful rollout checks missing; combine signed AMI/version
+      provenance, vulnerability dates and deployment state. Control-plane/Fargate host slice
+      provider-owned.
+
+  - ism_id: ISM-0445
+    title: >-
+      Privileged users are assigned a dedicated privileged user account to be used solely for duties
+      requiring privileged access.
+    coverage: automated
+    layers: [cluster]
+    rationale: >-
+      Dedicated/default SA settings only; human privileged accounts and September meaning need
+      review. Kyverno privileged-access; IdP/account approvals external.
+
+  - ism_id: ISM-0459
+    title: >-
+      Full disk encryption, or partial encryption where access controls only allow writing to
+      encrypted partitions or volumes, is implemented when encrypting media.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      At-rest encryption needs volume/storage and API-data/KMS evidence. ENCRYPTED_VOLUMES is a
+      candidate, not an etcd check; validate default EKS encryption separately.
+
+  - ism_id: ISM-0469
+    title: An AACP or high assurance cryptographic protocol is used when encrypting data in transit.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Transport/algorithm configuration needs node/ingress/application and AWS endpoint
+      observations; encryption enabled alone does not establish approved algorithms.
+
+  - ism_id: ISM-0471
+    title: >-
+      Only AACAs or high assurance cryptographic algorithms are used by cryptographic equipment,
+      applications and libraries.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Transport/algorithm configuration needs node/ingress/application and AWS endpoint
+      observations; encryption enabled alone does not establish approved algorithms.
+
+  - ism_id: ISM-0507
+    title: >-
+      Cryptographic key management processes, and supporting cryptographic key management
+      procedures, are developed, implemented and maintained.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-0580
+    title: A security monitoring policy is developed, implemented and maintained.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-0585
+    title: >-
+      For each event logged, the date and time of the event, the relevant user or process, the
+      relevant filename, the event description, and the information technology equipment involved
+      are captured.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-0813
+    title: >-
+      Server rooms, communications rooms and security containers are not left in unsecured states.
+    coverage: provider-report
+    layers: [provider]
+    rationale: >-
+      AWS-facility physical/access protection slice: use applicable private assessment evidence.
+      1053 classification/site applicability must be confirmed; customer facilities are outside this
+      inherited slice.
+
+  - ism_id: ISM-0843
+    title: Application control is implemented on workstations.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-0974
+    title: Multi-factor authentication is used to authenticate unprivileged users of systems.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-0988
+    title: An accurate and consistent time source is used for event logging.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [node-host]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1053
+    title: >-
+      Classified servers, network devices and cryptographic equipment are secured in server rooms or
+      communications rooms that meet the requirements for a security zone suitable for their
+      classification.
+    coverage: provider-report
+    layers: [provider]
+    rationale: >-
+      AWS-facility physical/access protection slice: use applicable private assessment evidence.
+      1053 classification/site applicability must be confirmed; customer facilities are outside this
+      inherited slice.
+
+  - ism_id: ISM-1074
+    title: >-
+      Keys or equivalent access mechanisms to server rooms, communications rooms and security
+      containers are appropriately controlled.
+    coverage: provider-report
+    layers: [provider]
+    rationale: >-
+      AWS-facility physical/access protection slice: use applicable private assessment evidence.
+      1053 classification/site applicability must be confirmed; customer facilities are outside this
+      inherited slice.
+
+  - ism_id: ISM-1080
+    title: An AACA or high assurance cryptographic algorithm is used when encrypting data at rest.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      At-rest encryption needs volume/storage and API-data/KMS evidence. ENCRYPTED_VOLUMES is a
+      candidate, not an etcd check; validate default EKS encryption separately.
+
+  - ism_id: ISM-1173
+    title: Multi-factor authentication is used to authenticate privileged users of systems.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1175
+    title: >-
+      Privileged user accounts (excluding those explicitly authorised to access online services) are
+      prevented from accessing the internet, email and web services.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1182
+    title: >-
+      Network access controls are implemented to limit the flow of network traffic within and
+      between network segments to only that required for business purposes.
+    coverage: automated
+    layers: [cluster, aws-account]
+    rationale: >-
+      NetworkPolicy coverage via companion; customer selects approved flows, AWS supplies network
+      substrate. Require CNI enforcement, flow approval and VPC/security-group evidence.
+
+  - ism_id: ISM-1228
+    title: >-
+      Cyber security events are analysed in a timely manner to identify cyber security incidents.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Timely security analysis requires SOC case/response timestamps, not merely enabled logging.
+
+  - ism_id: ISM-1246
+    title: >-
+      Server applications are hardened using ASD and vendor hardening guidance, with the most
+      restrictive guidance taking precedence when conflicts occur.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Workload security-context/isolation checks via both engines; platform admission baseline also
+      customer-owned. Host/runtime/control-plane slices need separate evidence.
+
+  - ism_id: ISM-1380
+    title: Privileged users use separate privileged and unprivileged operating environments.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1387
+    title: Administrative activities are conducted through jump servers.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1401
+    title: >-
+      Multi-factor authentication uses either: something users have and something users know, or
+      something users have that is unlocked by something users know or are.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1405
+    title: A centralised event logging facility is implemented.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1409
+    title: >-
+      Operating systems are hardened using ASD and vendor hardening guidance, with the most
+      restrictive guidance taking precedence when conflicts occur.
+    coverage: buildable
+    layers: [node]
+    collectors: [node-host]
+    rationale: >-
+      Worker OS/kubelet/kernel/file-permission hardening missing. Use supported node scanner and
+      measured AMI/config evidence; Fargate/EKS control-plane host slice inherited.
+
+  - ism_id: ISM-1412
+    title: >-
+      Web browsers are hardened using ASD and vendor hardening guidance, with the most restrictive
+      guidance taking precedence when conflicts occur.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1416
+    title: >-
+      A software firewall is implemented on workstations and servers to restrict inbound and
+      outbound network connections to an organisation-approved set of applications and services.
+    coverage: automated
+    layers: [cluster, aws-account]
+    rationale: >-
+      NetworkPolicy coverage via companion; customer selects approved flows, AWS supplies network
+      substrate. Require CNI enforcement, flow approval and VPC/security-group evidence.
+
+  - ism_id: ISM-1485
+    title: Web browsers do not process web advertisements from the internet.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1486
+    title: Web browsers do not process Java from the internet.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1488
+    title: Microsoft Office macros in files originating from the internet are blocked.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1489
+    title: Microsoft Office macro security settings cannot be changed by users.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1490
+    title: Application control is implemented on internet-facing servers.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Registry/image/privilege checks via both engines. Pipeline approval and executable/runtime
+      coverage remain external; ECR hosting does not approve images.
+
+  - ism_id: ISM-1501
+    title: Operating systems that are no longer supported by vendors are replaced.
+    coverage: automated
+    layers: [workload, node]
+    rationale: >-
+      Kyverno base-image declarations only; customer image/patch pipeline. EC2 worker OS update
+      evidence missing; Fargate host slice inherited, workload image still customer.
+
+  - ism_id: ISM-1504
+    title: >-
+      Multi-factor authentication is used to authenticate users to their organisation’s online
+      services that process, store or communicate their organisation’s sensitive data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1507
+    title: >-
+      Requests for privileged access to systems and their resources are validated when first
+      requested.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Privilege approval/revalidation/inactivity require lifecycle records and identity logs beyond
+      static RBAC.
+
+  - ism_id: ISM-1509
+    title: Privileged access events are centrally logged.
+    coverage: buildable
+    layers: [cluster, node, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Collect privileged/account/application-control/process events from API, node/runtime and
+      central log pipeline; no mapped logging detector. Fargate host visibility needs provider
+      evidence.
+
+  - ism_id: ISM-1511
+    title: >-
+      Backups of data, applications and settings are performed and retained in accordance with
+      business criticality and business continuity requirements.
+    coverage: automated
+    layers: [cluster, aws-account]
+    rationale: >-
+      Kyverno PVC label only, including accepted false; backup schedules/jobs, retention and restore
+      evidence external. EKS control-plane recovery does not back up workload data.
+
+  - ism_id: ISM-1515
+    title: >-
+      Restoration of data, applications and settings from backups to a common point in time is
+      tested as part of disaster recovery exercises.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Restore exercise outcomes, application integrity and common recovery point require external
+      exercise evidence; example jobs do not establish success.
+
+  - ism_id: ISM-1542
+    title: >-
+      Microsoft Office is configured to prevent activation of Object Linking and Embedding packages.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1544
+    title: Microsoft’s recommended application blocklist is implemented.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1547
+    title: >-
+      Data backup processes, and supporting data backup procedures, are developed, implemented and
+      maintained.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-1582
+    title: Application control rulesets are validated at least annually.
+    coverage: document
+    layers: [organisation]
+    rationale: Annual ruleset validation requires dated review/test evidence and approved scope.
+
+  - ism_id: ISM-1585
+    title: Web browser security settings cannot be changed by users.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1604
+    title: >-
+      When using a software-based isolation mechanism that consumes shared physical computing
+      resources, the configuration of the isolation mechanism is hardened by removing unneeded
+      functionality and restricting access to the administrative interface used to manage the
+      isolation mechanism.
+    coverage: automated
+    layers: [workload, node, provider]
+    rationale: >-
+      Workload security-context/isolation checks via both engines; platform admission baseline also
+      customer-owned. Host/runtime/control-plane slices need separate evidence. The provider
+      hypervisor slice is inherited; whether the control also applies to container hosts is an
+      assessor decision, and on EC2 workers that slice is the customer's.
+
+  - ism_id: ISM-1605
+    title: >-
+      When using a software-based isolation mechanism that consumes shared physical computing
+      resources, the underlying operating system is hardened.
+    coverage: buildable
+    layers: [node, provider]
+    collectors: [node-host]
+    rationale: >-
+      Worker OS/kubelet/kernel/file-permission hardening missing. Use supported node scanner and
+      measured AMI/config evidence; Fargate/EKS control-plane host slice inherited. The provider
+      hypervisor slice is inherited; whether the control also applies to container hosts is an
+      assessor decision, and on EC2 workers that slice is the customer's.
+
+  - ism_id: ISM-1606
+    title: >-
+      When using a software-based isolation mechanism that consumes shared physical computing
+      resources, patches, updates or vendor mitigations for vulnerabilities are applied to the
+      isolation mechanism and underlying operating system in a timely manner.
+    coverage: buildable
+    layers: [node, provider]
+    collectors: [node-host]
+    rationale: >-
+      Node patch/support inventory and successful rollout checks missing; combine signed AMI/version
+      provenance, vulnerability dates and deployment state. Control-plane/Fargate host slice
+      provider-owned. The provider hypervisor slice is inherited; whether the control also applies
+      to container hosts is an assessor decision, and on EC2 workers that slice is the customer's.
+
+  - ism_id: ISM-1607
+    title: >-
+      When using a software-based isolation mechanism that consumes shared physical resources,
+      integrity monitoring and centralised event logging is performed for the isolation mechanism
+      and underlying operating system.
+    coverage: buildable
+    layers: [node, provider]
+    collectors: [node-host]
+    rationale: >-
+      Host integrity/Linux security-event collection missing; combine host findings and delivery
+      verification. Fargate underlying host evidence inherited. The provider hypervisor slice is
+      inherited; whether the control also applies to container hosts is an assessor decision, and on
+      EC2 workers that slice is the customer's.
+
+  - ism_id: ISM-1623
+    title: >-
+      PowerShell module logging, script block logging and transcription events are centrally logged.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      PowerShell event collection is endpoint/Windows-node evidence; excluded from this Linux
+      platform slice.
+
+  - ism_id: ISM-1643
+    title: >-
+      Software registers contain versions and patch histories of applications, drivers, operating
+      systems and firmware.
+    coverage: buildable
+    layers: [cluster, node]
+    collectors: [node-inventory]
+    rationale: >-
+      Version/patch inventory from nodes, images and AMI releases can support software register;
+      external approval/history still required.
+
+  - ism_id: ISM-1647
+    title: >-
+      Privileged access to systems and their resources are disabled after 12 months unless
+      revalidated.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Privilege approval/revalidation/inactivity require lifecycle records and identity logs beyond
+      static RBAC.
+
+  - ism_id: ISM-1648
+    title: >-
+      Privileged access to systems and their resources are disabled after 45 days of inactivity.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Privilege approval/revalidation/inactivity require lifecycle records and identity logs beyond
+      static RBAC.
+
+  - ism_id: ISM-1650
+    title: Privileged user account and security group management events are centrally logged.
+    coverage: buildable
+    layers: [cluster, node, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Collect privileged/account/application-control/process events from API, node/runtime and
+      central log pipeline; no mapped logging detector. Fargate host visibility needs provider
+      evidence.
+
+  - ism_id: ISM-1654
+    title: Internet Explorer 11 is disabled or removed.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1657
+    title: >-
+      Application control restricts the execution of executables, libraries, scripts, installers,
+      compiled HTML, HTML applications and control panel applets to an organisation-approved set.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Registry/image/privilege checks via both engines. Pipeline approval and executable/runtime
+      coverage remain external; ECR hosting does not approve images.
+
+  - ism_id: ISM-1660
+    title: Allowed and blocked application control events are centrally logged.
+    coverage: buildable
+    layers: [cluster, node, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Collect privileged/account/application-control/process events from API, node/runtime and
+      central log pipeline; no mapped logging detector. Fargate host visibility needs provider
+      evidence.
+
+  - ism_id: ISM-1667
+    title: Microsoft Office is blocked from creating child processes.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1668
+    title: Microsoft Office is blocked from creating executable content.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1669
+    title: Microsoft Office is blocked from injecting code into other processes.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1670
+    title: PDF applications are blocked from creating child processes.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1671
+    title: >-
+      Microsoft Office macros are disabled for users that do not have a demonstrated business
+      requirement.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1672
+    title: Microsoft Office macro antivirus scanning is enabled.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1673
+    title: Microsoft Office macros are blocked from making Win32 API calls.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1679
+    title: >-
+      Multi-factor authentication is used to authenticate users to third-party online services that
+      process, store or communicate their organisation’s sensitive data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1680
+    title: >-
+      Multi-factor authentication (where available) is used to authenticate users to third-party
+      online services that process, store or communicate their organisation’s non-sensitive data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1681
+    title: >-
+      Multi-factor authentication is used to authenticate customers to online customer services that
+      process, store or communicate sensitive customer data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1682
+    title: >-
+      Multi-factor authentication used for authenticating users of systems is phishing-resistant.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1683
+    title: Successful and unsuccessful multi-factor authentication events are centrally logged.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      MFA event collection is an IdP/IAM log obligation; cannot infer it from Kubernetes audit logs.
+
+  - ism_id: ISM-1685
+    title: >-
+      Credentials for break glass accounts, local administrator accounts and service accounts are
+      long, unique, unpredictable and managed.
+    coverage: automated
+    layers: [cluster]
+    rationale: >-
+      Kyverno legacy-token Secret type, admission only. Credential lifecycle/rotation and IdP/KMS
+      evidence external.
+
+  - ism_id: ISM-1687
+    title: >-
+      Privileged operating environments are not virtualised within unprivileged operating
+      environments.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1688
+    title: Unprivileged user accounts cannot logon to privileged operating environments.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1689
+    title: >-
+      Privileged user accounts (excluding local administrator accounts) cannot logon to unprivileged
+      operating environments.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider, aws-account]
+    rationale: >-
+      Administrative access paths and separated privileged environments require bastion/endpoint/IdP
+      evidence; Pod namespace separation is insufficient.
+
+  - ism_id: ISM-1690
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in online services are
+      applied within two weeks of release when vulnerabilities are assessed as non-critical by
+      vendors and no working exploits exist.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno image-age/build metadata only; actual vulnerability severity, release date and
+      remediation clock need trusted pipeline records.
+
+  - ism_id: ISM-1691
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in office productivity
+      suites, web browsers and their extensions, email clients, PDF applications, and security
+      products are applied within two weeks of release.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Endpoint application patch/scanner/support obligations require endpoint inventory; separately
+      review platform security agents where applicable.
+
+  - ism_id: ISM-1693
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in applications other than
+      office productivity suites, web browsers and their extensions, email clients, PDF
+      applications, and security products are applied within one month of release.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno image-age/build metadata only; actual vulnerability severity, release date and
+      remediation clock need trusted pipeline records.
+
+  - ism_id: ISM-1694
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in operating systems of
+      internet-facing servers and internet-facing network devices are applied within two weeks of
+      release when vulnerabilities are assessed as non-critical by vendors and no working exploits
+      exist.
+    coverage: automated
+    layers: [workload, node]
+    rationale: >-
+      Kyverno base-image declarations only; customer image/patch pipeline. EC2 worker OS update
+      evidence missing; Fargate host slice inherited, workload image still customer.
+
+  - ism_id: ISM-1695
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in operating systems of
+      workstations, non-internet-facing servers and non-internet-facing network devices are applied
+      within one month of release.
+    coverage: automated
+    layers: [workload, node]
+    rationale: >-
+      Kyverno base-image declarations only; customer image/patch pipeline. EC2 worker OS update
+      evidence missing; Fargate host slice inherited, workload image still customer.
+
+  - ism_id: ISM-1696
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in operating systems of
+      workstations, non-internet-facing servers and non-internet-facing network devices are applied
+      within 48 hours of release when vulnerabilities are assessed as critical by vendors or when
+      working exploits exist.
+    coverage: buildable
+    layers: [node]
+    collectors: [node-inventory]
+    rationale: >-
+      Node patch/support inventory and successful rollout checks missing; combine signed AMI/version
+      provenance, vulnerability dates and deployment state. Control-plane/Fargate host slice
+      provider-owned.
+
+  - ism_id: ISM-1698
+    title: >-
+      A vulnerability scanner is used at least daily to identify missing patches or updates for
+      vulnerabilities in online services.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno scan-status declaration only; scanner runs, database freshness and completed coverage
+      need pipeline/ECR scan records.
+
+  - ism_id: ISM-1699
+    title: >-
+      A vulnerability scanner is used at least weekly to identify missing patches or updates for
+      vulnerabilities in office productivity suites, web browsers and their extensions, email
+      clients, PDF applications, and security products.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Endpoint application patch/scanner/support obligations require endpoint inventory; separately
+      review platform security agents where applicable.
+
+  - ism_id: ISM-1700
+    title: >-
+      A vulnerability scanner is used at least fortnightly to identify missing patches or updates
+      for vulnerabilities in applications other than office productivity suites, web browsers and
+      their extensions, email clients, PDF applications, and security products.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno scan-status declaration only; scanner runs, database freshness and completed coverage
+      need pipeline/ECR scan records.
+
+  - ism_id: ISM-1701
+    title: >-
+      A vulnerability scanner is used at least daily to identify missing patches or updates for
+      vulnerabilities in operating systems of internet-facing servers and internet-facing network
+      devices.
+    coverage: buildable
+    layers: [node]
+    collectors: [aws-account]
+    rationale: >-
+      Worker vulnerability scan schedules/results plus node inventory; configuration alone cannot
+      prove actual scan intervals. Fargate host maintenance inherited.
+
+  - ism_id: ISM-1702
+    title: >-
+      A vulnerability scanner is used at least fortnightly to identify missing patches or updates
+      for vulnerabilities in operating systems of workstations, non-internet-facing servers and
+      non-internet-facing network devices.
+    coverage: buildable
+    layers: [node]
+    collectors: [aws-account]
+    rationale: >-
+      Worker vulnerability scan schedules/results plus node inventory; configuration alone cannot
+      prove actual scan intervals. Fargate host maintenance inherited.
+
+  - ism_id: ISM-1704
+    title: >-
+      Office productivity suites, web browsers and their extensions, email clients, PDF
+      applications, Adobe Flash Player, and security products that are no longer supported by
+      vendors are removed.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Endpoint application patch/scanner/support obligations require endpoint inventory; separately
+      review platform security agents where applicable.
+
+  - ism_id: ISM-1705
+    title: >-
+      Privileged user accounts (excluding backup administrator accounts) cannot access backups
+      belonging to other user accounts.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Backup access/mutation restrictions need backup-controller RBAC plus storage IAM tests and
+      backup-service records; current PVC-label check does not test these.
+
+  - ism_id: ISM-1707
+    title: >-
+      Privileged user accounts (excluding backup administrator accounts) are prevented from
+      modifying and deleting backups.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Backup access/mutation restrictions need backup-controller RBAC plus storage IAM tests and
+      backup-service records; current PVC-label check does not test these.
+
+  - ism_id: ISM-1708
+    title: >-
+      Backup administrator accounts are prevented from modifying and deleting backups during their
+      retention period.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Backup administrator deletion restrictions need storage retention and IAM enforcement tests;
+      no local detector.
+
+  - ism_id: ISM-1787
+    title: >-
+      Operating systems, applications, IT equipment, OT equipment and services are sourced from
+      approved suppliers.
+    coverage: buildable
+    layers: [workload]
+    collectors: [kyverno]
+    rationale: >-
+      Signed image/artifact and approved supplier evidence are candidates; registry allowlisting
+      does not verify content authenticity or supplier acceptance.
+
+  - ism_id: ISM-1791
+    title: >-
+      The integrity of operating systems, applications, IT equipment, OT equipment and services are
+      assessed as part of acceptance of products and services.
+    coverage: buildable
+    layers: [workload]
+    collectors: [kyverno]
+    rationale: >-
+      Signed image/artifact and approved supplier evidence are candidates; registry allowlisting
+      does not verify content authenticity or supplier acceptance.
+
+  - ism_id: ISM-1792
+    title: >-
+      The authenticity of operating systems, applications, IT equipment, OT equipment and services
+      are assessed as part of acceptance of products and services.
+    coverage: buildable
+    layers: [workload]
+    collectors: [kyverno]
+    rationale: >-
+      Signed image/artifact and approved supplier evidence are candidates; registry allowlisting
+      does not verify content authenticity or supplier acceptance.
+
+  - ism_id: ISM-1807
+    title: >-
+      An automated method of asset discovery is used at least fortnightly to support the detection
+      of assets for subsequent vulnerability scanning activities.
+    coverage: buildable
+    layers: [cluster, node]
+    collectors: [node-inventory, aws-account]
+    rationale: >-
+      Inventory collector coverage and dated discovery runs needed; API listing can supply assets
+      but no cadence/completeness detector is mapped.
+
+  - ism_id: ISM-1808
+    title: >-
+      A vulnerability scanner with an up-to-date vulnerability database is used for vulnerability
+      scanning activities.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno scan-status declaration only; scanner runs, database freshness and completed coverage
+      need pipeline/ECR scan records.
+
+  - ism_id: ISM-1809
+    title: >-
+      When applications, operating systems, network devices or networked IT equipment that are no
+      longer supported by vendors cannot be immediately removed or replaced, compensating controls
+      are implemented until such time that they can be removed or replaced.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-1810
+    title: >-
+      Backups of data, applications and settings are synchronised to enable restoration to a common
+      point in time.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Backup consistency/security configuration is partially detectable; require actual recovery
+      points, encryption/storage evidence and recovery tests externally.
+
+  - ism_id: ISM-1811
+    title: Backups of data, applications and settings are retained in a secure and resilient manner.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Backup consistency/security configuration is partially detectable; require actual recovery
+      points, encryption/storage evidence and recovery tests externally.
+
+  - ism_id: ISM-1812
+    title: Unprivileged user accounts cannot access backups belonging to other user accounts.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Backup access/mutation restrictions need backup-controller RBAC plus storage IAM tests and
+      backup-service records; current PVC-label check does not test these.
+
+  - ism_id: ISM-1814
+    title: Unprivileged user accounts are prevented from modifying and deleting backups.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [kyverno, aws-account]
+    rationale: >-
+      Backup access/mutation restrictions need backup-controller RBAC plus storage IAM tests and
+      backup-service records; current PVC-label check does not test these.
+
+  - ism_id: ISM-1815
+    title: Event logs are protected from unauthorised modification and deletion.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Log immutability requires central store retention/access evidence (for example Object Lock)
+      plus producer configuration; live reports are mutable.
+
+  - ism_id: ISM-1819
+    title: >-
+      Following the identification of a cyber security incident, the cyber security incident
+      response plan is enacted.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Incident notification/response execution requires incident records and accountable
+      organisational staff; API configuration cannot prove it.
+
+  - ism_id: ISM-1823
+    title: Office productivity suite security settings cannot be changed by users.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1824
+    title: PDF application security settings cannot be changed by users.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1848
+    title: >-
+      When using a software-based isolation mechanism that consumes shared physical computing
+      resources, the isolation mechanism or underlying operating system is replaced when it is no
+      longer supported by a vendor.
+    coverage: buildable
+    layers: [node, provider]
+    collectors: [node-host]
+    rationale: >-
+      Node patch/support inventory and successful rollout checks missing; combine signed AMI/version
+      provenance, vulnerability dates and deployment state. Control-plane/Fargate host slice
+      provider-owned. The provider hypervisor slice is inherited; whether the control also applies
+      to container hosts is an assessor decision, and on EC2 workers that slice is the customer's.
+
+  - ism_id: ISM-1859
+    title: >-
+      Office productivity suites are hardened using ASD and vendor hardening guidance, with the most
+      restrictive guidance taking precedence when conflicts occur.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1860
+    title: >-
+      PDF applications are hardened using ASD and vendor hardening guidance, with the most
+      restrictive guidance taking precedence when conflicts occur.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1870
+    title: >-
+      Application control is applied to user profiles and temporary folders used by operating
+      systems, web browsers and email clients.
+    coverage: outside-platform
+    layers: [endpoint]
+    rationale: >-
+      Workstation/browser/Office/PDF application controls belong to endpoint management. Excluded
+      from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
+
+  - ism_id: ISM-1871
+    title: >-
+      Application control is applied to all locations other than user profiles and temporary folders
+      used by operating systems, web browsers and email clients.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Registry/image/privilege checks via both engines. Pipeline approval and executable/runtime
+      coverage remain external; ECR hosting does not approve images.
+
+  - ism_id: ISM-1872
+    title: >-
+      Multi-factor authentication used for authenticating users of online services is
+      phishing-resistant.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1873
+    title: >-
+      Multi-factor authentication used for authenticating customers of online customer services
+      provides a phishing-resistant option.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1876
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in online services are
+      applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or
+      when working exploits exist.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      Kyverno image-age/build metadata only; actual vulnerability severity, release date and
+      remediation clock need trusted pipeline records.
+
+  - ism_id: ISM-1877
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in operating systems of
+      internet-facing servers and internet-facing network devices are applied within 48 hours of
+      release when vulnerabilities are assessed as critical by vendors or when working exploits
+      exist.
+    coverage: automated
+    layers: [workload, node]
+    rationale: >-
+      Kyverno base-image declarations only; customer image/patch pipeline. EC2 worker OS update
+      evidence missing; Fargate host slice inherited, workload image still customer.
+
+  - ism_id: ISM-1883
+    title: >-
+      Privileged user accounts explicitly authorised to access online services are strictly limited
+      to only what is required for users and services to undertake their duties.
+    coverage: automated
+    layers: [cluster]
+    rationale: >-
+      Kyverno dedicated-SA/cluster-admin and companion RBAC checks; approvals and human account
+      lifecycle external. September service-account relationship requires review.
+
+  - ism_id: ISM-1889
+    title: Command line process creation events are centrally logged.
+    coverage: buildable
+    layers: [cluster, node, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Collect privileged/account/application-control/process events from API, node/runtime and
+      central log pipeline; no mapped logging detector. Fargate host visibility needs provider
+      evidence.
+
+  - ism_id: ISM-1892
+    title: >-
+      Multi-factor authentication is used to authenticate users to their organisation’s online
+      customer services that process, store or communicate their organisation’s sensitive customer
+      data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1893
+    title: >-
+      Multi-factor authentication is used to authenticate users to third-party online customer
+      services that process, store or communicate their organisation’s sensitive customer data.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
+    rationale: >-
+      Human/customer MFA semantics require IAM/IdP/application authentication evidence. Kubernetes
+      ServiceAccounts cannot prove MFA. AWS IAM Config checks alone do not cover federated users.
+
+  - ism_id: ISM-1902
+    title: >-
+      Patches, updates or other vendor mitigations for vulnerabilities in operating systems of
+      workstations, non-internet-facing servers and non-internet-facing network devices are applied
+      within one month of release when vulnerabilities are assessed as non-critical by vendors and
+      no working exploits exist.
+    coverage: buildable
+    layers: [node]
+    collectors: [node-inventory]
+    rationale: >-
+      Node patch/support inventory and successful rollout checks missing; combine signed AMI/version
+      provenance, vulnerability dates and deployment state. Control-plane/Fargate host slice
+      provider-owned.
+
+  - ism_id: ISM-1905
+    title: Online services that are no longer supported by vendors are removed.
+    coverage: buildable
+    layers: [workload]
+    rationale: >-
+      Online-service support state needs trusted component inventory/vendor lifecycle data; image
+      age does not establish support.
+
+  - ism_id: ISM-1906
+    title: >-
+      Event logs from internet-facing servers are analysed in a timely manner to detect cyber
+      security events.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Timely security analysis requires SOC case/response timestamps, not merely enabled logging.
+
+  - ism_id: ISM-1959
+    title: >-
+      To the extent possible, event logs are captured and stored in a consistent and structured
+      format.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1974
+    title: >-
+      Non-classified servers, network devices and cryptographic equipment are secured in suitably
+      secure server rooms or communications rooms.
+    coverage: provider-report
+    layers: [provider]
+    rationale: >-
+      AWS-facility physical/access protection slice: use applicable private assessment evidence.
+      1053 classification/site applicability must be confirmed; customer facilities are outside this
+      inherited slice.
+
+  - ism_id: ISM-1977
+    title: Security-relevant events for Linux operating systems are centrally logged.
+    coverage: buildable
+    layers: [node]
+    collectors: [aws-account]
+    rationale: >-
+      Host integrity/Linux security-event collection missing; combine host findings and delivery
+      verification. Fargate underlying host evidence inherited.
+
+  - ism_id: ISM-1983
+    title: >-
+      Event logs sent to a centralised event logging facility are sent as soon as possible after
+      they occur.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1984
+    title: >-
+      Event logs sent to a centralised event logging facility are encrypted in transit using
+      Australian Signals Directorate (ASD)-approved cryptography.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Transport/algorithm configuration needs node/ingress/application and AWS endpoint
+      observations; encryption enabled alone does not establish approved algorithms.
+
+  - ism_id: ISM-1985
+    title: Event logs are protected from unauthorised access.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1986
+    title: >-
+      Event logs from critical servers are analysed in a timely manner to detect cyber security
+      events.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      Critical-server log analysis requires SOC investigation/timing records; a collector cannot
+      prove human analysis.
+
+  - ism_id: ISM-1988
+    title: Event logs are retained in a searchable manner for at least 12 months.
+    coverage: buildable
+    layers: [cluster, aws-account]
+    collectors: [aws-account]
+    rationale: >-
+      Logging fields/time/centralisation/format/delivery/access/retention need node and account
+      configuration plus sampled logs; AWS service provision is only one slice.
+
+  - ism_id: ISM-1989
+    title: >-
+      Event logs are retained as per minimum retention requirements for various classes of records
+      as set out by the National Archives of Australia’s Administrative Functions Disposal Authority
+      Express (AFDA Express) Version 2 publication.
+    coverage: document
+    layers: [organisation]
+    rationale: >-
+      System/incident/key/monitoring/backup/risk/retention procedures require approved
+      organisational records; configuration is supporting evidence only.
+
+  - ism_id: ISM-2051
+    title: >-
+      Software generates sufficient event logs to support the detection of cyber security events.
+    coverage: buildable
+    layers: [workload]
+    rationale: >-
+      Application log sufficiency and sensitive-data handling need application tests/log sampling;
+      admission metadata cannot establish runtime log content.
+
+  - ism_id: ISM-2052
+    title: Event logs produced by software ensure that any sensitive data is protected.
+    coverage: buildable
+    layers: [workload]
+    rationale: >-
+      Application log sufficiency and sensitive-data handling need application tests/log sampling;
+      admission metadata cannot establish runtime log content.

@@ -16,6 +16,26 @@ SOURCE = ROOT / "mapping/ism-mapping.yaml"
 PROVENANCE_LOCK = ROOT / "mapping/provenance.lock.yaml"
 DEFAULT_OUTPUT = ROOT / "mapping/views/e8.yaml"
 DEFAULT_KUBESCAPE_OUTPUT = ROOT / "mapping/views/kubescape.json"
+COVERAGE = ROOT / "mapping/coverage.yaml"
+DEFAULT_COVERAGE_OUTPUT = ROOT / "mapping/views/coverage-matrix.md"
+LAYERS = {
+    "workload": "Workload",
+    "cluster": "Cluster",
+    "node": "Node",
+    "aws-account": "AWS account",
+    "identity": "Identity",
+    "organisation": "Organisation",
+    "endpoint": "Endpoint",
+    "provider": "Provider",
+}
+COVERAGE_STATES = {
+    "automated": "Automated: a detector in this project produces evidence",
+    "buildable": "Buildable: technical evidence can be collected; no detector yet",
+    "external-api": "External API: collectable from identity or account systems outside the cluster",
+    "document": "Document: needs an organisational record; attach evidence",
+    "provider-report": "Provider report: cite the provider's assessment",
+    "outside-platform": "Outside platform: endpoint and workstation controls, not part of a Linux cluster",
+}
 STRATEGIES = {
     "application-control": ("E8-01", "Application control"),
     "patch-applications": ("E8-02", "Patch applications"),
@@ -117,25 +137,67 @@ def render_kubescape(source: Path = SOURCE) -> str:
     return json.dumps(view, indent=2) + "\n"
 
 
+def render_coverage(source: Path = COVERAGE) -> str:
+    data = yaml.safe_load(source.read_text())
+    controls = data["controls"]
+    lines = [
+        "# ISM coverage matrix",
+        "",
+        f"Generated from [`../coverage.yaml`](../coverage.yaml) (ISM {data['ism_release']}); do not edit.",
+        "",
+        f"{len(controls)} controls reviewed for Kubernetes platforms. Each row says where the evidence",
+        "lives and how far this project produces it. It does not say who is responsible: join that from",
+        "the provider's controls matrix with `scripts/import_cscm.py`. On EKS Fargate, the node layer",
+        "moves to the provider.",
+        "",
+        "## Summary",
+        "",
+        "Controls spanning several layers count once in each.",
+        "",
+        "| Coverage | " + " | ".join(LAYERS.values()) + " | Controls |",
+        "|---|" + "---:|" * (len(LAYERS) + 1),
+    ]
+    for state in COVERAGE_STATES:
+        rows = [control for control in controls if control["coverage"] == state]
+        counts = [sum(layer in control["layers"] for control in rows) for layer in LAYERS]
+        lines.append(f"| {state} | " + " | ".join(str(count or "") for count in counts) + f" | {len(rows)} |")
+
+    for state, description in COVERAGE_STATES.items():
+        rows = [control for control in controls if control["coverage"] == state]
+        lines += ["", f"## {description}", "", "| ISM ID | Layers | Collectors | Control |", "|---|---|---|---|"]
+        for control in rows:
+            title = control["title"].split("\n")[0].replace("|", "\\|")
+            layers = ", ".join(LAYERS[layer] for layer in control["layers"])
+            collectors = ", ".join(control.get("collectors", [])) or "—"
+            lines.append(f"| {control['ism_id']} | {layers} | {collectors} | {title} |")
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=SOURCE)
     parser.add_argument("--provenance-lock", type=Path, default=PROVENANCE_LOCK)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--kubescape-output", type=Path, default=DEFAULT_KUBESCAPE_OUTPUT)
+    parser.add_argument("--coverage", type=Path, default=COVERAGE)
+    parser.add_argument("--coverage-output", type=Path, default=DEFAULT_COVERAGE_OUTPUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     generated = render(args.source, args.provenance_lock)
     kubescape_generated = render_kubescape(args.source)
+    coverage_generated = render_coverage(args.coverage)
     if args.check:
         if not args.output.exists() or args.output.read_text() != generated:
             raise SystemExit(f"{args.output} is stale; run scripts/generate_views.py")
         if not args.kubescape_output.exists() or args.kubescape_output.read_text() != kubescape_generated:
             raise SystemExit(f"{args.kubescape_output} is stale; run scripts/generate_views.py")
+        if not args.coverage_output.exists() or args.coverage_output.read_text() != coverage_generated:
+            raise SystemExit(f"{args.coverage_output} is stale; run scripts/generate_views.py")
         return 0
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(generated)
     args.kubescape_output.write_text(kubescape_generated)
+    args.coverage_output.write_text(coverage_generated)
     return 0
 
 
