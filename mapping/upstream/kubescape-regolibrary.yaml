@@ -113,10 +113,12 @@ controls:
   related_checks:
   - ism-no-host-access
   rationale: One of the four upstream host-isolation controls that the local rule combines.
-  description: Regular containers do not bind ports on the node, so workloads are reached
-    through Services rather than directly on the host.
+  description: Containers do not bind ports on the node, so workloads are reached through
+    Services rather than directly on the host.
   evidence_boundary: A pass shows that no regular container in the scanned workloads declares
-    a hostPort. Init and ephemeral containers are not checked. It does not show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
+    a hostPort. The kubelet maps host ports only for regular containers, and ephemeral containers
+    cannot declare ports, so init and ephemeral containers are not checked. It does not show
+    that all ASD and vendor hardening guidance was identified, reconciled or implemented,
     and it does not assess the Kubernetes control plane, node runtime configuration or the
     administrative interfaces used to manage the isolation mechanism.
 - control_id: C-0046
