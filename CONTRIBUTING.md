@@ -52,14 +52,23 @@ Before opening a pull request:
 
 ## Publish the Kubescape mapping
 
-Maintainers publish a mapping after review and a green `main` build. Create a `v*` tag from `main` and push it:
+Merging a pull request that changes `mapping/views/kubescape.json` or `mapping/views/regolibrary-ism.json` publishes a release. The [merge workflow](./.github/workflows/auto-release.yaml) validates the mapping and tags `main` with the next version, using the `RELEASE_DEPLOY_KEY` deploy key. The tag starts the [release workflow](./.github/workflows/release-mapping.yaml). Label the pull request to choose the version:
+
+| Label | Release |
+| --- | --- |
+| none | patch, for example `v0.3.0` to `v0.3.1` |
+| `release:minor` | minor, for example `v0.3.0` to `v0.4.0` |
+| `release:major` | major, for example `v0.3.0` to `v1.0.0` |
+| `release:skip` | no release |
+
+Tags are immutable, so choose the label before merging. To release by hand instead, tag the head of `main` and push the tag:
 
 ```bash
-git tag vX.Y.Z
+git tag -a vX.Y.Z -m vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-The [release workflow](./.github/workflows/release-mapping.yaml) validates the generated view and publishes `kubescape.json` with its SHA-256 checksum. Enable [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes) before publishing the first tag so GitHub locks the tag and assets and produces the attestation used by `ism-kubescape-framework`.
+The release workflow validates the generated views and publishes `kubescape.json` and `regolibrary-ism.json` with their SHA-256 checksums. Enable [immutable releases](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes) before publishing the first tag so GitHub locks the tag and assets and produces the attestation used by `ism-kubescape-framework`.
 
 The companion [`ism-kubescape-framework`](https://github.com/Latticework-Systems/ism-kubescape-framework) verifies and imports a release with:
 
