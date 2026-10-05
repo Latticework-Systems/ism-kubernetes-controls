@@ -4,6 +4,8 @@ Machine-readable mappings and Kyverno policies for Kubernetes-observable parts o
 
 This repository defines the relationship between ISM controls and Kubernetes checks. Assessment, reporting and certification sit outside its scope.
 
+The mapping targets the **September 2026 ISM**, using ASD's [OSCAL v2026.09.4 release](https://www.cyber.gov.au/ism/oscal/v2026.09.4). See the [upgrade review](./docs/ism-september-2026-upgrade.md) for mapping changes and coverage gaps.
+
 ## What this repo is for
 
 Use either part on its own:
@@ -48,17 +50,24 @@ For a brownfield cluster, policies with other names remain in place and keep the
 
 - [`mapping/ism-mapping.yaml`](./mapping/ism-mapping.yaml): the hand-maintained canonical mapping, including evidence boundaries and pinned Kubescape provenance.
 - [`mapping/views/kubescape.json`](./mapping/views/kubescape.json): generated input for the companion `ism-kubescape-framework` repository.
+- [`mapping/upstream/kubescape-regolibrary.yaml`](./mapping/upstream/kubescape-regolibrary.yaml): relationships between existing [Kubescape regolibrary](https://github.com/kubescape/regolibrary) controls and ISM controls, with the rationale and evidence boundary for each.
+- [`mapping/views/regolibrary-ism.json`](./mapping/views/regolibrary-ism.json): the generated `frameworks/ism.json` contributed to Kubescape regolibrary.
 - [`mapping/views/e8.yaml`](./mapping/views/e8.yaml): a generated Essential Eight ML2 compatibility view. ISM remains the primary model.
 - [`policies/`](./policies/): ISM-aligned Kyverno policies that can audit or enforce selected Kubernetes settings.
 - [`mapping/provenance.lock.yaml`](./mapping/provenance.lock.yaml): pinned ASD OSCAL and upstream Kubescape sources.
 - [`artifacthub/`](./artifacthub/): generated [Artifact Hub](https://artifacthub.io) packages, one per policy family, so the policies are installable from the Kyverno policy catalogue.
 
-The current mapping contains 21 detector-backed ISM controls. Seventeen of those occur in ASD's 87-control Essential Eight ML2 OSCAL profile. The remaining four are full-ISM workload and network controls:
+The current mapping contains 23 detector-backed ISM controls. Sixteen of those occur in ASD's 87-control Essential Eight ML2 OSCAL profile. The remaining seven are full-ISM workload, credential and network controls:
 
 - ISM-1182: network traffic is limited to business-required flows.
 - ISM-1246: server applications are hardened using ASD and vendor guidance.
 - ISM-1416: inbound and outbound connections are restricted to approved applications and services.
 - ISM-1604: shared software isolation mechanisms are hardened.
+- ISM-2128: the ability to load kernel-mode code is limited to privileged users.
+- ISM-2141: workloads prefer short-lived dynamically issued credentials.
+- ISM-2143: workload credentials are unique across workloads and environments.
+
+ISM-0445 now explicitly concerns privileged human users. Service-account checks provide partial evidence for ISM-2143 instead; ISM-0445 remains in the Essential Eight profile without a detector mapping here.
 
 Each mapping states its evidence boundary. For example, a NetworkPolicy finding can show whether ingress and egress policies select a workload. An assessor must establish that the policy matches business need and that the cluster network plugin enforces it.
 
@@ -77,11 +86,11 @@ Latticework Posture consumes scan and PolicyReport output for reporting and work
 | [`application-control`](./policies/application-control/) | Approved registries, immutable version selection and privileged-container restrictions | ISM-1490, ISM-1657, ISM-1871 |
 | [`patch-applications`](./policies/patch-applications/) | Declared build date and vulnerability-scan state at admission | ISM-1690, ISM-1693, ISM-1698, ISM-1700, ISM-1808, ISM-1876 |
 | [`workload-hardening`](./policies/workload-hardening/) | Security context, host isolation and read-only root filesystem | ISM-1246, ISM-1604 |
-| [`privileged-access`](./policies/privileged-access/) | Dedicated service accounts, legacy tokens and cluster-admin bindings | ISM-0445, ISM-1685, ISM-1883 |
+| [`privileged-access`](./policies/privileged-access/) | Dedicated service accounts, legacy tokens and cluster-admin bindings | ISM-1685, ISM-1883, ISM-2141, ISM-2143 |
 | [`patch-operating-systems`](./policies/patch-operating-systems/) | Declared base-image support state | ISM-1501, ISM-1694, ISM-1695, ISM-1877 |
 | [`backups`](./policies/backups/) | Declared backup coverage for production PVCs | ISM-1511 |
 
-Seventeen `ClusterPolicy` objects provide evidence for 19 ISM controls. Some policies cover more than one control. The remaining two mapped controls, ISM-1182 and ISM-1416, use Kubescape network checks with no Kyverno equivalent. See [`ism-kubescape-framework`](https://github.com/Latticework-Systems/ism-kubescape-framework).
+Seventeen `ClusterPolicy` objects provide evidence for 20 ISM controls. Some policies cover more than one control. The remaining three mapped controls use Kubescape checks with no Kyverno equivalent: network checks for ISM-1182 and ISM-1416, and the privileged-container check for ISM-2128. See [`ism-kubescape-framework`](https://github.com/Latticework-Systems/ism-kubescape-framework).
 
 The root [`kustomization.yaml`](./kustomization.yaml) (applied above in Quick start) is a brownfield-friendly first wave covering `application-control`, `workload-hardening` and `privileged-access` in `Audit` mode, and it omits the default-service-account mutation.
 

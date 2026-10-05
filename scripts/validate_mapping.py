@@ -112,6 +112,42 @@ def validate_provenance(data: dict, lock: dict, regolibrary: Path | None) -> Non
         raise SystemExit("invalid Kubescape provenance:\n" + "\n".join(errors))
 
 
+def validate_upstream_framework(data: dict, upstream: dict, schema: dict, lock: dict, regolibrary: Path | None) -> None:
+    """Check the regolibrary framework relationships against the canonical mapping."""
+    errors = [
+        f"schema: {'/'.join(map(str, error.path))}: {error.message}"
+        for error in sorted(Draft202012Validator(schema).iter_errors(upstream), key=lambda error: list(error.path))
+    ]
+    if errors:
+        raise SystemExit("invalid upstream framework mapping:\n" + "\n".join(errors))
+
+    if upstream["ism_release"] != data["ism_release"]:
+        errors.append(f"ism_release {upstream['ism_release']} differs from the canonical mapping {data['ism_release']}")
+    control_ids = [control["control_id"] for control in upstream["controls"]]
+    if control_ids != sorted(control_ids) or len(control_ids) != len(set(control_ids)):
+        errors.append("upstream controls must have unique control IDs in sorted order")
+
+    ism_ids = {control["ism_id"] for control in data["controls"]}
+    check_names = {key(check)[1] for control in data["controls"] for check in control["checks"]}
+    check_names |= {key(check)[1] for check in data["unmapped"]}
+    source = lock["sources"]["kubescape_regolibrary_framework"]
+    for control in upstream["controls"]:
+        for ism_id in control["ism_ids"]:
+            if ism_id not in ism_ids:
+                errors.append(f"{control['control_id']} maps {ism_id}, which the canonical mapping does not define")
+        for check in control["related_checks"]:
+            if check not in check_names:
+                errors.append(f"{control['control_id']} relates to unknown check {check}")
+        if regolibrary:
+            control_files = list(regolibrary.glob(f"controls/{control['control_id']}-*.json"))
+            if len(control_files) != 1:
+                errors.append(f"cannot resolve {control['control_id']} in {source['repository']}@{source['ref']}")
+            elif json.loads(control_files[0].read_text())["name"] != control["name"]:
+                errors.append(f"{control['control_id']} name differs from {source['repository']}@{source['ref']}")
+    if errors:
+        raise SystemExit("invalid upstream framework mapping:\n" + "\n".join(errors))
+
+
 def profile_ids(profile: dict) -> list[str]:
     return sorted(
         value.upper()
@@ -217,6 +253,13 @@ def main() -> int:
     parser.add_argument("--e8-profile", type=Path)
     parser.add_argument("--kubescape-controls", type=Path)
     parser.add_argument("--regolibrary", type=Path)
+    parser.add_argument("--upstream-mapping", type=Path, default=ROOT / "mapping/upstream/kubescape-regolibrary.yaml")
+    parser.add_argument("--upstream-schema", type=Path, default=ROOT / "mapping/schema/kubescape-regolibrary.schema.json")
+    parser.add_argument(
+        "--regolibrary-framework",
+        type=Path,
+        help="kubescape/regolibrary checkout at the kubescape_regolibrary_framework ref",
+    )
     args = parser.parse_args()
 
     data = yaml.safe_load(args.mapping.read_text())
@@ -234,6 +277,12 @@ def main() -> int:
         raise SystemExit(f"Kubescape regolibrary not found: {args.regolibrary}")
     validate_provenance(data, lock, args.regolibrary)
     validate_authorities(data, lock, args.asd_catalog, args.e8_profile, args.kubescape_controls)
+    if args.regolibrary_framework and not args.regolibrary_framework.is_dir():
+        raise SystemExit(f"Kubescape regolibrary not found: {args.regolibrary_framework}")
+    upstream = yaml.safe_load(args.upstream_mapping.read_text())
+    validate_upstream_framework(
+        data, upstream, json.loads(args.upstream_schema.read_text()), lock, args.regolibrary_framework
+    )
 
     mapped = {key(check) for control in data["controls"] for check in control["checks"]}
     unmapped = {key(check) for check in data["unmapped"]}
@@ -264,7 +313,8 @@ def main() -> int:
     profile_mapped = len(profile_ids & set(ids))
     print(
         f"valid: {len(ids)} detector-backed ISM controls; {profile_mapped} of {profile_total} in the locked E8 ML2 profile, "
-        f"{len(mapped)} mapped checks, {len(unmapped)} explicitly unmapped checks"
+        f"{len(mapped)} mapped checks, {len(unmapped)} explicitly unmapped checks; "
+        f"{len(upstream['controls'])} regolibrary framework controls"
     )
     return 0
 

@@ -93,9 +93,9 @@ PACKAGES = {
         ),
     },
     "privileged-access": {
-        "version": "0.1.0",
+        "version": "0.1.1",
         "createdAt": "2026-08-28T00:00:00Z",
-        "displayName": "ISM Restrict Administrative Privileges",
+        "displayName": "ISM Privileged Access and Workload Credentials",
         "summary": (
             "Disables default ServiceAccount token automount, requires production "
             "workloads to run under a dedicated ServiceAccount, blocks legacy "

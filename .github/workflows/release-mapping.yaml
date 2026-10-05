@@ -37,8 +37,10 @@ jobs:
         run: |
           mkdir release
           cp mapping/views/kubescape.json release/kubescape.json
+          cp mapping/views/regolibrary-ism.json release/regolibrary-ism.json
           cd release
           sha256sum kubescape.json > kubescape.json.sha256
+          sha256sum regolibrary-ism.json > regolibrary-ism.json.sha256
 
       - name: Publish immutable release assets
         env:
@@ -48,6 +50,8 @@ jobs:
             gh release create "$GITHUB_REF_NAME" \
               release/kubescape.json \
               release/kubescape.json.sha256 \
+              release/regolibrary-ism.json \
+              release/regolibrary-ism.json.sha256 \
               --verify-tag \
               --generate-notes \
               --title "ISM Kubernetes controls $GITHUB_REF_NAME"

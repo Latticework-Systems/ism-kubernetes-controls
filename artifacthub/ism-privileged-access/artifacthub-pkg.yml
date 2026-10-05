@@ -1,11 +1,11 @@
 name: ism-privileged-access
-version: 0.1.0
-displayName: ISM Restrict Administrative Privileges
+version: 0.1.1
+displayName: ISM Privileged Access and Workload Credentials
 createdAt: '2026-08-28T00:00:00Z'
 description: Disables default ServiceAccount token automount, requires production workloads to run under
   a dedicated ServiceAccount, blocks legacy ServiceAccount token Secrets, and blocks new cluster-admin
-  bindings. Provides partial Kubernetes evidence for Australian Government ISM controls ISM-0445, ISM-1685,
-  ISM-1883.
+  bindings. Provides partial Kubernetes evidence for Australian Government ISM controls ISM-1685, ISM-1883,
+  ISM-2141, ISM-2143.
 license: Apache-2.0
 homeURL: https://github.com/Latticework-Systems/ism-kubernetes-controls
 install: |
@@ -33,7 +33,7 @@ links:
 provider:
   name: Latticework Systems
 readme: |
-  # ISM Restrict Administrative Privileges
+  # ISM Privileged Access and Workload Credentials
 
   Disables default ServiceAccount token automount, requires production workloads to run under a dedicated ServiceAccount, blocks legacy ServiceAccount token Secrets, and blocks new cluster-admin bindings.
 
@@ -41,18 +41,20 @@ readme: |
 
   | Control | Coverage | Title |
   | --- | --- | --- |
-  | ISM-0445 | partial | Privileged users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access. |
   | ISM-1685 | partial | Credentials for break glass accounts, local administrator accounts and service accounts are long, unique, unpredictable and managed. |
-  | ISM-1883 | partial | Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users and services to undertake their duties. |
+  | ISM-1883 | partial | Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users to undertake their duties or functions. |
+  | ISM-2141 | partial | Applications and workloads use short-lived dynamically issued credentials in preference to long-lived static credentials. |
+  | ISM-2143 | partial | Applications and workloads use unique credentials that are not shared with other applications or workloads, or across development, testing, staging and production environments. |
 
   ## Evidence boundary
 
   Each mapping below is partial evidence. A PolicyReport shows what the cluster
   admitted. It does not discharge an ISM control, and it is not an assessment.
 
-  - **ISM-0445**: PolicyReports show whether production workloads use dedicated service accounts; they do not prove human privileged-account separation or account governance.
   - **ISM-1685**: PolicyReports show legacy long-lived service-account token Secrets; they do not assess external secret stores, break-glass credentials or rotation.
-  - **ISM-1883**: RBAC and service-account findings show Kubernetes privilege breadth; they do not prove authorisation workflow, human account lifecycle or external systems.
+  - **ISM-1883**: RBAC findings show Kubernetes permission breadth and cluster-admin assignments; they do not establish which privileged human accounts require online-service access, authorisation workflow, human account lifecycle or external systems.
+  - **ISM-2141**: Admission results show whether new or updated legacy service-account token Secrets are rejected or reported; background scanning is disabled. They do not prove existing tokens are removed, projected tokens are used, token lifetimes are short, or application and external credentials are dynamic.
+  - **ISM-2143**: PolicyReports show whether production Pods avoid the default service account; the optional mutation disables token automount on default ServiceAccounts. These checks do not prove that non-default accounts or credentials are unique per workload or environment, or that applications do not share other secrets.
 
   ## Policies in this package
 
