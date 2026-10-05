@@ -16,6 +16,8 @@ SOURCE = ROOT / "mapping/ism-mapping.yaml"
 PROVENANCE_LOCK = ROOT / "mapping/provenance.lock.yaml"
 DEFAULT_OUTPUT = ROOT / "mapping/views/e8.yaml"
 DEFAULT_KUBESCAPE_OUTPUT = ROOT / "mapping/views/kubescape.json"
+UPSTREAM_SOURCE = ROOT / "mapping/upstream/kubescape-regolibrary.yaml"
+DEFAULT_REGOLIBRARY_OUTPUT = ROOT / "mapping/views/regolibrary-ism.json"
 COVERAGE = ROOT / "mapping/coverage.yaml"
 DEFAULT_COVERAGE_OUTPUT = ROOT / "mapping/views/coverage-matrix.md"
 LAYERS = {
@@ -137,6 +139,35 @@ def render_kubescape(source: Path = SOURCE) -> str:
     return json.dumps(view, indent=2) + "\n"
 
 
+def render_regolibrary(source: Path = SOURCE, upstream: Path = UPSTREAM_SOURCE) -> str:
+    """Render frameworks/ism.json for kubescape/regolibrary in its framework format."""
+    titles = {control["ism_id"]: control["title"] for control in yaml.safe_load(source.read_text())["controls"]}
+    data = yaml.safe_load(upstream.read_text())
+    active_controls = []
+    for control in data["controls"]:
+        statements = " ".join(f"{ism_id}: {titles[ism_id]}" for ism_id in control["ism_ids"])
+        active_controls.append(
+            {
+                "controlID": control["control_id"],
+                "patch": {
+                    "name": f"{control['name']} ({', '.join(control['ism_ids'])})",
+                    "description": control["description"],
+                    "long_description": f"{statements} Evidence boundary: {control['evidence_boundary']}",
+                },
+            }
+        )
+    framework = data["framework"]
+    view = {
+        "name": framework["name"],
+        "description": framework["description"],
+        "attributes": {"version": framework["version"], "builtin": True},
+        "scanningScope": {"matches": ["cluster", "file"]},
+        "typeTags": ["compliance"],
+        "activeControls": active_controls,
+    }
+    return json.dumps(view, indent=4, ensure_ascii=False) + "\n"
+
+
 def render_coverage(source: Path = COVERAGE) -> str:
     data = yaml.safe_load(source.read_text())
     controls = data["controls"]
@@ -176,28 +207,29 @@ def render_coverage(source: Path = COVERAGE) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=SOURCE)
+    parser.add_argument("--upstream-source", type=Path, default=UPSTREAM_SOURCE)
     parser.add_argument("--provenance-lock", type=Path, default=PROVENANCE_LOCK)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--kubescape-output", type=Path, default=DEFAULT_KUBESCAPE_OUTPUT)
+    parser.add_argument("--regolibrary-output", type=Path, default=DEFAULT_REGOLIBRARY_OUTPUT)
     parser.add_argument("--coverage", type=Path, default=COVERAGE)
     parser.add_argument("--coverage-output", type=Path, default=DEFAULT_COVERAGE_OUTPUT)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    generated = render(args.source, args.provenance_lock)
-    kubescape_generated = render_kubescape(args.source)
-    coverage_generated = render_coverage(args.coverage)
+    outputs = {
+        args.output: render(args.source, args.provenance_lock),
+        args.kubescape_output: render_kubescape(args.source),
+        args.regolibrary_output: render_regolibrary(args.source, args.upstream_source),
+        args.coverage_output: render_coverage(args.coverage),
+    }
     if args.check:
-        if not args.output.exists() or args.output.read_text() != generated:
-            raise SystemExit(f"{args.output} is stale; run scripts/generate_views.py")
-        if not args.kubescape_output.exists() or args.kubescape_output.read_text() != kubescape_generated:
-            raise SystemExit(f"{args.kubescape_output} is stale; run scripts/generate_views.py")
-        if not args.coverage_output.exists() or args.coverage_output.read_text() != coverage_generated:
-            raise SystemExit(f"{args.coverage_output} is stale; run scripts/generate_views.py")
+        for path, generated in outputs.items():
+            if not path.exists() or path.read_text() != generated:
+                raise SystemExit(f"{path} is stale; run scripts/generate_views.py")
         return 0
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(generated)
-    args.kubescape_output.write_text(kubescape_generated)
-    args.coverage_output.write_text(coverage_generated)
+    for path, generated in outputs.items():
+        path.write_text(generated)
     return 0
 
 

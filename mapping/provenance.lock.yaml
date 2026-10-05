@@ -2,18 +2,22 @@ schema_version: "1.0"
 sources:
   asd_ism_catalog:
     authority: Australian Signals Directorate
-    version: "2026.06.18"
-    url: https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_catalog.json
-    sha256: f3e4512bc31eb3157001c4a9312d80840b3a3c485f1e87d6b5519b2b0dcc56cc
+    version: "2026.09.4"
+    url: https://www.cyber.gov.au/ism/oscal/v2026.09.4/artifacts/ISM_catalog.json
+    sha256: 237ea09362b8449ed5c5ee85de4725a0468ee73d13af7cf61c26d4e6ac47f12d
   asd_e8_ml2_profile:
     authority: Australian Signals Directorate
-    version: "2026.06.18"
-    url: https://www.cyber.gov.au/ism/oscal/v2026.06.18/artifacts/ISM_E8_ML2-baseline_profile.json
-    sha256: 89940c68a9f9e7bd88612e8a2cc328bad05a31fcaf58833f452c1bb88f23ed43
+    version: "2026.09.4"
+    url: https://www.cyber.gov.au/ism/oscal/v2026.09.4/artifacts/ISM_E8_ML2-baseline_profile.json
+    sha256: 547538ccd92b1f40e779fe3b6513ca8290b09915aa76d9bbe2413c74fd4e9bf0
   kubescape_regolibrary:
     repository: https://github.com/kubescape/regolibrary
     ref: 01f57decc4a771facfb7166f02af986ccb560203
     archive_sha256: 48407b08bd9cd8e0912fdcad3ed3913f88a081f1ae8ee6c77290dde06c373cbe
+  kubescape_regolibrary_framework:
+    repository: https://github.com/kubescape/regolibrary
+    ref: 9e768319099b1c9c776049573a8350afbb301c4b
+    archive_sha256: bfbd8e3c0cf6dd652bbe7bb831cefff4b93877ee991f8a82d18e52ad4e127a5b
   kubescape_control_inventory:
     version: "4.0.10"
     sha256: 3a1d740b933526762cee9640ee858dfc66c8a09677d17fc60250d0f384e6eeb6

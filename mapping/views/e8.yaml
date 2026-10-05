@@ -1,14 +1,13 @@
 schema_version: '1.0'
 source:
   canonical: ../ism-mapping.yaml
-  ism_release: 2026-06
+  ism_release: 2026-09
   generated: true
 profile_coverage:
   profile: ASD Essential Eight Maturity Level 2
   source: ../provenance.lock.yaml
   total_controls: 87
   detector_backed_controls:
-  - ISM-0445
   - ISM-1490
   - ISM-1501
   - ISM-1511
@@ -28,6 +27,7 @@ profile_coverage:
   without_detector_mapping:
   - ISM-0123
   - ISM-0140
+  - ISM-0445
   - ISM-0843
   - ISM-0974
   - ISM-1173
@@ -121,7 +121,6 @@ strategies:
 - id: E8-05
   name: Restrict administrative privileges
   ismControls:
-  - '0445'
   - '1685'
   - '1883'
 - id: E8-06
@@ -154,15 +153,6 @@ checks:
   - ISM-1490
   - ISM-1657
   - ISM-1871
-  coverage: partial
-- engine: kubescape
-  rule_id: ism-minimise-clusterrolebindings
-  provenance:
-    disposition: custom
-    rationale: Upstream administrative-role controls identify cluster-admin-equivalent
-      access, not every non-system cluster-wide service-account binding.
-  ism_ids:
-  - ISM-1883
   coverage: partial
 - engine: kubescape
   rule_id: ism-no-cluster-admin-binding
@@ -286,15 +276,13 @@ checks:
   ism_ids:
   - ISM-1685
   coverage: partial
-- engine: kyverno
-  policy: ism-privileged-access-mutate-default-sa
-  ism_ids:
-  - ISM-0445
-  coverage: partial
-- engine: kyverno
-  policy: ism-privileged-access-require-dedicated-sa
-  ism_ids:
-  - ISM-0445
-  - ISM-1883
-  coverage: partial
-unmapped: []
+unmapped:
+- engine: kubescape
+  rule_id: ism-minimise-clusterrolebindings
+  reason: The detector counts non-system cluster-wide service-account bindings. The
+    September 2026 ISM-1883 statement concerns privileged user accounts and no longer
+    includes services; this detector does not evaluate human account access.
+  provenance:
+    disposition: custom
+    rationale: Upstream administrative-role controls identify cluster-admin-equivalent
+      access, not every non-system cluster-wide service-account binding.

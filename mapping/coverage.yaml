@@ -9,15 +9,15 @@
 #
 # A `node` layer moves to the provider on EKS Fargate.
 schema_version: "1.0"
-ism_release: "2026-06"
+ism_release: "2026-09"
 generated: false
 controls:
   - ism_id: ISM-0041
     title: >-
-      Systems have a system security plan that includes an overview of the system (covering the
-      system’s purpose, the system boundary and how the system is managed) as well as an annex that
-      covers applicable controls from this document and any additional controls that have been
-      identified and implemented.
+      Systems have a system security plan that includes an overview of the system (covering
+      the system’s purpose, the system boundary and how the system is managed) as well as an
+      annex that covers applicable security controls from this document and any additional
+      security controls that have been identified and implemented.
     coverage: document
     layers: [organisation]
     rationale: >-
@@ -77,13 +77,14 @@ controls:
 
   - ism_id: ISM-0445
     title: >-
-      Privileged users are assigned a dedicated privileged user account to be used solely for duties
-      requiring privileged access.
-    coverage: automated
-    layers: [cluster]
+      Privileged human users are assigned a dedicated privileged user account to be used
+      solely for duties requiring privileged access.
+    coverage: external-api
+    layers: [identity]
+    collectors: [identity-provider]
     rationale: >-
-      Dedicated/default SA settings only; human privileged accounts and September meaning need
-      review. Kyverno privileged-access; IdP/account approvals external.
+      September limits this control to privileged human users, so it needs an IdP inventory of
+      dedicated privileged accounts. The service-account checks now support ISM-2143.
 
   - ism_id: ISM-0459
     title: >-
@@ -165,7 +166,8 @@ controls:
       from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
 
   - ism_id: ISM-0974
-    title: Multi-factor authentication is used to authenticate unprivileged users of systems.
+    title: >-
+      Multi-factor authentication is used to authenticate unprivileged human users of systems.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -215,7 +217,8 @@ controls:
       candidate, not an etcd check; validate default EKS encryption separately.
 
   - ism_id: ISM-1173
-    title: Multi-factor authentication is used to authenticate privileged users of systems.
+    title: >-
+      Multi-factor authentication is used to authenticate privileged human users of systems.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -263,7 +266,8 @@ controls:
       customer-owned. Host/runtime/control-plane slices need separate evidence.
 
   - ism_id: ISM-1380
-    title: Privileged users use separate privileged and unprivileged operating environments.
+    title: >-
+      Privileged human users use separate privileged and unprivileged operating environments.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider, aws-account]
@@ -282,8 +286,8 @@ controls:
 
   - ism_id: ISM-1401
     title: >-
-      Multi-factor authentication uses either: something users have and something users know, or
-      something users have that is unlocked by something users know or are.
+      Multi-factor authentication uses either: something people have and something people
+      know, or something people have that is unlocked by something people know or are.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -356,7 +360,8 @@ controls:
       from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
 
   - ism_id: ISM-1489
-    title: Microsoft Office macro security settings cannot be changed by users.
+    title: >-
+      Microsoft Office macro security settings cannot be changed by human users.
     coverage: outside-platform
     layers: [endpoint]
     rationale: >-
@@ -381,8 +386,8 @@ controls:
 
   - ism_id: ISM-1504
     title: >-
-      Multi-factor authentication is used to authenticate users to their organisation’s online
-      services that process, store or communicate their organisation’s sensitive data.
+      Multi-factor authentication is used to authenticate human users to their organisation’s
+      online services that process, store or communicate their organisation’s sensitive data.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -465,7 +470,8 @@ controls:
     rationale: Annual ruleset validation requires dated review/test evidence and approved scope.
 
   - ism_id: ISM-1585
-    title: Web browser security settings cannot be changed by users.
+    title: >-
+      Web browser security settings cannot be changed by human users.
     coverage: outside-platform
     layers: [endpoint]
     rationale: >-
@@ -640,8 +646,8 @@ controls:
 
   - ism_id: ISM-1671
     title: >-
-      Microsoft Office macros are disabled for users that do not have a demonstrated business
-      requirement.
+      Microsoft Office macros are disabled for human users that do not have a demonstrated
+      business requirement.
     coverage: outside-platform
     layers: [endpoint]
     rationale: >-
@@ -666,8 +672,8 @@ controls:
 
   - ism_id: ISM-1679
     title: >-
-      Multi-factor authentication is used to authenticate users to third-party online services that
-      process, store or communicate their organisation’s sensitive data.
+      Multi-factor authentication is used to authenticate human users to third-party online
+      services that process, store or communicate their organisation’s sensitive data.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -677,8 +683,9 @@ controls:
 
   - ism_id: ISM-1680
     title: >-
-      Multi-factor authentication (where available) is used to authenticate users to third-party
-      online services that process, store or communicate their organisation’s non-sensitive data.
+      Multi-factor authentication (where available) is used to authenticate human users to
+      third-party online services that process, store or communicate their organisation’s
+      non-sensitive data.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -699,7 +706,8 @@ controls:
 
   - ism_id: ISM-1682
     title: >-
-      Multi-factor authentication used for authenticating users of systems is phishing-resistant.
+      Multi-factor authentication used for authenticating human users of systems is
+      phishing-resistant.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -737,7 +745,9 @@ controls:
       evidence; Pod namespace separation is insufficient.
 
   - ism_id: ISM-1688
-    title: Unprivileged user accounts cannot logon to privileged operating environments.
+    title: >-
+      Unprivileged user accounts cannot be used to log on to privileged operating
+      environments.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider, aws-account]
@@ -747,8 +757,8 @@ controls:
 
   - ism_id: ISM-1689
     title: >-
-      Privileged user accounts (excluding local administrator accounts) cannot logon to unprivileged
-      operating environments.
+      Privileged user accounts (excluding local administrator accounts) cannot be used to log
+      on to unprivileged operating environments.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider, aws-account]
@@ -982,9 +992,9 @@ controls:
 
   - ism_id: ISM-1809
     title: >-
-      When applications, operating systems, network devices or networked IT equipment that are no
-      longer supported by vendors cannot be immediately removed or replaced, compensating controls
-      are implemented until such time that they can be removed or replaced.
+      When applications, operating systems, network devices or networked IT equipment that are
+      no longer supported by vendors cannot be immediately removed or replaced, compensating
+      security controls are implemented until such time that they can be removed or replaced.
     coverage: document
     layers: [organisation]
     rationale: >-
@@ -1049,7 +1059,8 @@ controls:
       organisational staff; API configuration cannot prove it.
 
   - ism_id: ISM-1823
-    title: Office productivity suite security settings cannot be changed by users.
+    title: >-
+      Office productivity suite security settings cannot be changed by human users.
     coverage: outside-platform
     layers: [endpoint]
     rationale: >-
@@ -1057,7 +1068,8 @@ controls:
       from this Linux server platform profile; revisit Windows/desktop workloads explicitly.
 
   - ism_id: ISM-1824
-    title: PDF application security settings cannot be changed by users.
+    title: >-
+      PDF application security settings cannot be changed by human users.
     coverage: outside-platform
     layers: [endpoint]
     rationale: >-
@@ -1120,7 +1132,7 @@ controls:
 
   - ism_id: ISM-1872
     title: >-
-      Multi-factor authentication used for authenticating users of online services is
+      Multi-factor authentication used for authenticating human users of online services is
       phishing-resistant.
     coverage: external-api
     layers: [identity]
@@ -1165,13 +1177,14 @@ controls:
 
   - ism_id: ISM-1883
     title: >-
-      Privileged user accounts explicitly authorised to access online services are strictly limited
-      to only what is required for users and services to undertake their duties.
+      Privileged user accounts explicitly authorised to access online services are strictly
+      limited to only what is required for users to undertake their duties or functions.
     coverage: automated
     layers: [cluster]
     rationale: >-
-      Kyverno dedicated-SA/cluster-admin and companion RBAC checks; approvals and human account
-      lifecycle external. September service-account relationship requires review.
+      Cluster-admin and companion RBAC checks show permission breadth. September limits the
+      statement to privileged user accounts, so approvals and human account lifecycle stay
+      external.
 
   - ism_id: ISM-1889
     title: Command line process creation events are centrally logged.
@@ -1185,9 +1198,9 @@ controls:
 
   - ism_id: ISM-1892
     title: >-
-      Multi-factor authentication is used to authenticate users to their organisation’s online
-      customer services that process, store or communicate their organisation’s sensitive customer
-      data.
+      Multi-factor authentication is used to authenticate human users to their organisation’s
+      online customer services that process, store or communicate their organisation’s
+      sensitive customer data.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -1197,8 +1210,9 @@ controls:
 
   - ism_id: ISM-1893
     title: >-
-      Multi-factor authentication is used to authenticate users to third-party online customer
-      services that process, store or communicate their organisation’s sensitive customer data.
+      Multi-factor authentication is used to authenticate human users to third-party online
+      customer services that process, store or communicate their organisation’s sensitive
+      customer data.
     coverage: external-api
     layers: [identity]
     collectors: [identity-provider]
@@ -1345,3 +1359,36 @@ controls:
     rationale: >-
       Application log sufficiency and sensitive-data handling need application tests/log sampling;
       admission metadata cannot establish runtime log content.
+
+  - ism_id: ISM-2128
+    title: >-
+      The ability to install, load or modify kernel-mode code, including drivers, kernel
+      modules and extensions, is limited to privileged users who require such abilities as
+      part of their duties or functions.
+    coverage: automated
+    layers: [workload]
+    rationale: >-
+      The privileged-container check shows whether workloads hold the capability to load
+      kernel modules through privileged mode. Containers that add SYS_MODULE alone, node
+      access and driver signing need node or host evidence.
+
+  - ism_id: ISM-2141
+    title: >-
+      Applications and workloads use short-lived dynamically issued credentials in preference
+      to long-lived static credentials.
+    coverage: automated
+    layers: [cluster]
+    rationale: >-
+      Kyverno legacy service-account token Secret check, admission only. Projected token
+      lifetimes and application or external credentials need further evidence.
+
+  - ism_id: ISM-2143
+    title: >-
+      Applications and workloads use unique credentials that are not shared with other
+      applications or workloads, or across development, testing, staging and production
+      environments.
+    coverage: automated
+    layers: [cluster]
+    rationale: >-
+      Kyverno default service-account checks. Per-workload uniqueness, other shared secrets
+      and per-environment credentials need further evidence.

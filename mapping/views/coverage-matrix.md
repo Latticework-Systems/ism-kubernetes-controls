@@ -1,8 +1,8 @@
 # ISM coverage matrix
 
-Generated from [`../coverage.yaml`](../coverage.yaml) (ISM 2026-06); do not edit.
+Generated from [`../coverage.yaml`](../coverage.yaml) (ISM 2026-09); do not edit.
 
-131 controls reviewed for Kubernetes platforms. Each row says where the evidence
+134 controls reviewed for Kubernetes platforms. Each row says where the evidence
 lives and how far this project produces it. It does not say who is responsible: join that from
 the provider's controls matrix with `scripts/import_cscm.py`. On EKS Fargate, the node layer
 moves to the provider.
@@ -13,9 +13,9 @@ Controls spanning several layers count once in each.
 
 | Coverage | Workload | Cluster | Node | AWS account | Identity | Organisation | Endpoint | Provider | Controls |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| automated | 15 | 6 | 5 | 3 |  |  |  | 1 | 21 |
+| automated | 16 | 7 | 5 | 3 |  |  |  | 1 | 23 |
 | buildable | 6 | 26 | 17 | 24 |  |  |  | 4 | 43 |
-| external-api |  |  |  |  | 22 |  |  |  | 22 |
+| external-api |  |  |  |  | 23 |  |  |  | 23 |
 | document |  |  |  |  |  | 15 |  |  | 15 |
 | provider-report |  |  |  |  |  |  |  | 4 | 4 |
 | outside-platform |  |  |  |  |  |  | 26 |  | 26 |
@@ -24,7 +24,6 @@ Controls spanning several layers count once in each.
 
 | ISM ID | Layers | Collectors | Control |
 |---|---|---|---|
-| ISM-0445 | Cluster | — | Privileged users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access. |
 | ISM-1182 | Cluster, AWS account | — | Network access controls are implemented to limit the flow of network traffic within and between network segments to only that required for business purposes. |
 | ISM-1246 | Workload | — | Server applications are hardened using ASD and vendor hardening guidance, with the most restrictive guidance taking precedence when conflicts occur. |
 | ISM-1416 | Cluster, AWS account | — | A software firewall is implemented on workstations and servers to restrict inbound and outbound network connections to an organisation-approved set of applications and services. |
@@ -44,7 +43,10 @@ Controls spanning several layers count once in each.
 | ISM-1871 | Workload | — | Application control is applied to all locations other than user profiles and temporary folders used by operating systems, web browsers and email clients. |
 | ISM-1876 | Workload | — | Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist. |
 | ISM-1877 | Workload, Node | — | Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist. |
-| ISM-1883 | Cluster | — | Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users and services to undertake their duties. |
+| ISM-1883 | Cluster | — | Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users to undertake their duties or functions. |
+| ISM-2128 | Workload | — | The ability to install, load or modify kernel-mode code, including drivers, kernel modules and extensions, is limited to privileged users who require such abilities as part of their duties or functions. |
+| ISM-2141 | Cluster | — | Applications and workloads use short-lived dynamically issued credentials in preference to long-lived static credentials. |
+| ISM-2143 | Cluster | — | Applications and workloads use unique credentials that are not shared with other applications or workloads, or across development, testing, staging and production environments. |
 
 ## Buildable: technical evidence can be collected; no detector yet
 
@@ -98,34 +100,35 @@ Controls spanning several layers count once in each.
 
 | ISM ID | Layers | Collectors | Control |
 |---|---|---|---|
-| ISM-0974 | Identity | identity-provider | Multi-factor authentication is used to authenticate unprivileged users of systems. |
-| ISM-1173 | Identity | identity-provider | Multi-factor authentication is used to authenticate privileged users of systems. |
+| ISM-0445 | Identity | identity-provider | Privileged human users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access. |
+| ISM-0974 | Identity | identity-provider | Multi-factor authentication is used to authenticate unprivileged human users of systems. |
+| ISM-1173 | Identity | identity-provider | Multi-factor authentication is used to authenticate privileged human users of systems. |
 | ISM-1175 | Identity | identity-provider, aws-account | Privileged user accounts (excluding those explicitly authorised to access online services) are prevented from accessing the internet, email and web services. |
-| ISM-1380 | Identity | identity-provider, aws-account | Privileged users use separate privileged and unprivileged operating environments. |
+| ISM-1380 | Identity | identity-provider, aws-account | Privileged human users use separate privileged and unprivileged operating environments. |
 | ISM-1387 | Identity | identity-provider, aws-account | Administrative activities are conducted through jump servers. |
-| ISM-1401 | Identity | identity-provider | Multi-factor authentication uses either: something users have and something users know, or something users have that is unlocked by something users know or are. |
-| ISM-1504 | Identity | identity-provider | Multi-factor authentication is used to authenticate users to their organisation’s online services that process, store or communicate their organisation’s sensitive data. |
+| ISM-1401 | Identity | identity-provider | Multi-factor authentication uses either: something people have and something people know, or something people have that is unlocked by something people know or are. |
+| ISM-1504 | Identity | identity-provider | Multi-factor authentication is used to authenticate human users to their organisation’s online services that process, store or communicate their organisation’s sensitive data. |
 | ISM-1507 | Identity | identity-provider | Requests for privileged access to systems and their resources are validated when first requested. |
 | ISM-1647 | Identity | identity-provider | Privileged access to systems and their resources are disabled after 12 months unless revalidated. |
 | ISM-1648 | Identity | identity-provider | Privileged access to systems and their resources are disabled after 45 days of inactivity. |
-| ISM-1679 | Identity | identity-provider | Multi-factor authentication is used to authenticate users to third-party online services that process, store or communicate their organisation’s sensitive data. |
-| ISM-1680 | Identity | identity-provider | Multi-factor authentication (where available) is used to authenticate users to third-party online services that process, store or communicate their organisation’s non-sensitive data. |
+| ISM-1679 | Identity | identity-provider | Multi-factor authentication is used to authenticate human users to third-party online services that process, store or communicate their organisation’s sensitive data. |
+| ISM-1680 | Identity | identity-provider | Multi-factor authentication (where available) is used to authenticate human users to third-party online services that process, store or communicate their organisation’s non-sensitive data. |
 | ISM-1681 | Identity | identity-provider | Multi-factor authentication is used to authenticate customers to online customer services that process, store or communicate sensitive customer data. |
-| ISM-1682 | Identity | identity-provider | Multi-factor authentication used for authenticating users of systems is phishing-resistant. |
+| ISM-1682 | Identity | identity-provider | Multi-factor authentication used for authenticating human users of systems is phishing-resistant. |
 | ISM-1683 | Identity | identity-provider | Successful and unsuccessful multi-factor authentication events are centrally logged. |
 | ISM-1687 | Identity | identity-provider, aws-account | Privileged operating environments are not virtualised within unprivileged operating environments. |
-| ISM-1688 | Identity | identity-provider, aws-account | Unprivileged user accounts cannot logon to privileged operating environments. |
-| ISM-1689 | Identity | identity-provider, aws-account | Privileged user accounts (excluding local administrator accounts) cannot logon to unprivileged operating environments. |
-| ISM-1872 | Identity | identity-provider | Multi-factor authentication used for authenticating users of online services is phishing-resistant. |
+| ISM-1688 | Identity | identity-provider, aws-account | Unprivileged user accounts cannot be used to log on to privileged operating environments. |
+| ISM-1689 | Identity | identity-provider, aws-account | Privileged user accounts (excluding local administrator accounts) cannot be used to log on to unprivileged operating environments. |
+| ISM-1872 | Identity | identity-provider | Multi-factor authentication used for authenticating human users of online services is phishing-resistant. |
 | ISM-1873 | Identity | identity-provider | Multi-factor authentication used for authenticating customers of online customer services provides a phishing-resistant option. |
-| ISM-1892 | Identity | identity-provider | Multi-factor authentication is used to authenticate users to their organisation’s online customer services that process, store or communicate their organisation’s sensitive customer data. |
-| ISM-1893 | Identity | identity-provider | Multi-factor authentication is used to authenticate users to third-party online customer services that process, store or communicate their organisation’s sensitive customer data. |
+| ISM-1892 | Identity | identity-provider | Multi-factor authentication is used to authenticate human users to their organisation’s online customer services that process, store or communicate their organisation’s sensitive customer data. |
+| ISM-1893 | Identity | identity-provider | Multi-factor authentication is used to authenticate human users to third-party online customer services that process, store or communicate their organisation’s sensitive customer data. |
 
 ## Document: needs an organisational record; attach evidence
 
 | ISM ID | Layers | Collectors | Control |
 |---|---|---|---|
-| ISM-0041 | Organisation | — | Systems have a system security plan that includes an overview of the system (covering the system’s purpose, the system boundary and how the system is managed) as well as an annex that covers applicable controls from this document and any additional controls that have been identified and implemented. |
+| ISM-0041 | Organisation | — | Systems have a system security plan that includes an overview of the system (covering the system’s purpose, the system boundary and how the system is managed) as well as an annex that covers applicable security controls from this document and any additional security controls that have been identified and implemented. |
 | ISM-0043 | Organisation | — | Systems have a cyber security incident response plan that covers the following: |
 | ISM-0123 | Organisation | — | Cyber security incidents are reported to the chief information security officer, or one of their delegates, as soon as possible after they occur or are discovered. |
 | ISM-0140 | Organisation | — | Cyber security incidents are reported to ASD as soon as possible after they occur or are discovered. |
@@ -135,7 +138,7 @@ Controls spanning several layers count once in each.
 | ISM-1515 | Organisation | — | Restoration of data, applications and settings from backups to a common point in time is tested as part of disaster recovery exercises. |
 | ISM-1547 | Organisation | — | Data backup processes, and supporting data backup procedures, are developed, implemented and maintained. |
 | ISM-1582 | Organisation | — | Application control rulesets are validated at least annually. |
-| ISM-1809 | Organisation | — | When applications, operating systems, network devices or networked IT equipment that are no longer supported by vendors cannot be immediately removed or replaced, compensating controls are implemented until such time that they can be removed or replaced. |
+| ISM-1809 | Organisation | — | When applications, operating systems, network devices or networked IT equipment that are no longer supported by vendors cannot be immediately removed or replaced, compensating security controls are implemented until such time that they can be removed or replaced. |
 | ISM-1819 | Organisation | — | Following the identification of a cyber security incident, the cyber security incident response plan is enacted. |
 | ISM-1906 | Organisation | — | Event logs from internet-facing servers are analysed in a timely manner to detect cyber security events. |
 | ISM-1986 | Organisation | — | Event logs from critical servers are analysed in a timely manner to detect cyber security events. |
@@ -159,24 +162,24 @@ Controls spanning several layers count once in each.
 | ISM-1485 | Endpoint | — | Web browsers do not process web advertisements from the internet. |
 | ISM-1486 | Endpoint | — | Web browsers do not process Java from the internet. |
 | ISM-1488 | Endpoint | — | Microsoft Office macros in files originating from the internet are blocked. |
-| ISM-1489 | Endpoint | — | Microsoft Office macro security settings cannot be changed by users. |
+| ISM-1489 | Endpoint | — | Microsoft Office macro security settings cannot be changed by human users. |
 | ISM-1542 | Endpoint | — | Microsoft Office is configured to prevent activation of Object Linking and Embedding packages. |
 | ISM-1544 | Endpoint | — | Microsoft’s recommended application blocklist is implemented. |
-| ISM-1585 | Endpoint | — | Web browser security settings cannot be changed by users. |
+| ISM-1585 | Endpoint | — | Web browser security settings cannot be changed by human users. |
 | ISM-1623 | Endpoint | — | PowerShell module logging, script block logging and transcription events are centrally logged. |
 | ISM-1654 | Endpoint | — | Internet Explorer 11 is disabled or removed. |
 | ISM-1667 | Endpoint | — | Microsoft Office is blocked from creating child processes. |
 | ISM-1668 | Endpoint | — | Microsoft Office is blocked from creating executable content. |
 | ISM-1669 | Endpoint | — | Microsoft Office is blocked from injecting code into other processes. |
 | ISM-1670 | Endpoint | — | PDF applications are blocked from creating child processes. |
-| ISM-1671 | Endpoint | — | Microsoft Office macros are disabled for users that do not have a demonstrated business requirement. |
+| ISM-1671 | Endpoint | — | Microsoft Office macros are disabled for human users that do not have a demonstrated business requirement. |
 | ISM-1672 | Endpoint | — | Microsoft Office macro antivirus scanning is enabled. |
 | ISM-1673 | Endpoint | — | Microsoft Office macros are blocked from making Win32 API calls. |
 | ISM-1691 | Endpoint | — | Patches, updates or other vendor mitigations for vulnerabilities in office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products are applied within two weeks of release. |
 | ISM-1699 | Endpoint | — | A vulnerability scanner is used at least weekly to identify missing patches or updates for vulnerabilities in office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products. |
 | ISM-1704 | Endpoint | — | Office productivity suites, web browsers and their extensions, email clients, PDF applications, Adobe Flash Player, and security products that are no longer supported by vendors are removed. |
-| ISM-1823 | Endpoint | — | Office productivity suite security settings cannot be changed by users. |
-| ISM-1824 | Endpoint | — | PDF application security settings cannot be changed by users. |
+| ISM-1823 | Endpoint | — | Office productivity suite security settings cannot be changed by human users. |
+| ISM-1824 | Endpoint | — | PDF application security settings cannot be changed by human users. |
 | ISM-1859 | Endpoint | — | Office productivity suites are hardened using ASD and vendor hardening guidance, with the most restrictive guidance taking precedence when conflicts occur. |
 | ISM-1860 | Endpoint | — | PDF applications are hardened using ASD and vendor hardening guidance, with the most restrictive guidance taking precedence when conflicts occur. |
 | ISM-1870 | Endpoint | — | Application control is applied to user profiles and temporary folders used by operating systems, web browsers and email clients. |

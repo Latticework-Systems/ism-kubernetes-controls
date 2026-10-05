@@ -41,6 +41,8 @@ python3 scripts/validate_mapping.py \
   --regolibrary /path/to/regolibrary
 ```
 
+Relationships in [`mapping/upstream/kubescape-regolibrary.yaml`](./mapping/upstream/kubescape-regolibrary.yaml) use existing regolibrary controls at the separate `kubescape_regolibrary_framework` ref in the lock. To check them against that revision, add `--regolibrary-framework /path/to/regolibrary-at-that-ref`. `make mapping-check` regenerates `mapping/views/regolibrary-ism.json`, the `frameworks/ism.json` contributed upstream, and fails if it is stale.
+
 ## Pull requests
 
 Before opening a pull request:
