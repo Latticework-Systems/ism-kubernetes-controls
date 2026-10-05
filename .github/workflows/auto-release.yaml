@@ -1,0 +1,87 @@
+name: Release mapping on merge
+
+# Tags main when a merge changes a release asset, and the tag push starts
+# release-mapping.yaml. The tag is pushed with the RELEASE_DEPLOY_KEY deploy
+# key: a tag pushed with GITHUB_TOKEN would not start the release workflow,
+# and the "Release tag maintainers" ruleset lets only org admins and deploy
+# keys create v* tags. The merged pull request's labels pick the version:
+#   release:major or release:minor  bump that part; anything else is a patch
+#   release:skip                    merge without releasing
+# Tags are immutable, so validation runs before the tag is created.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - mapping/views/kubescape.json
+      - mapping/views/regolibrary-ism.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mapping-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # The deploy key stays configured for the tag push; no artifacts are uploaded.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1 # zizmor: ignore[artipacked]
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Choose the next version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch origin main
+          if [ "$GITHUB_SHA" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "main has moved on; the run for the newer commit releases it."
+            exit 0
+          fi
+          last=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          test -n "$last"
+          if git diff --quiet "$last" HEAD -- mapping/views/kubescape.json mapping/views/regolibrary-ism.json; then
+            echo "Release assets are unchanged since $last."
+            exit 0
+          fi
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[0].labels[]?.name] | join(" ")')
+          case " $labels " in
+            *" release:skip "*) echo "Skipped by release:skip."; exit 0 ;;
+          esac
+          IFS=. read -r major minor patch <<< "${last#v}"
+          case " $labels " in
+            *" release:major "*) tag="v$((major + 1)).0.0" ;;
+            *" release:minor "*) tag="v$major.$((minor + 1)).0" ;;
+            *) tag="v$major.$minor.$((patch + 1))" ;;
+          esac
+          echo "Releasing $tag after $last (labels: ${labels:-none})."
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Validate mapping
+        if: steps.version.outputs.tag
+        run: |
+          pip install -r requirements-dev.txt
+          make mapping-check
+
+      - name: Push tag
+        if: steps.version.outputs.tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
