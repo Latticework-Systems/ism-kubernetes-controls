@@ -33,9 +33,10 @@ controls:
   related_checks:
   - ism-no-privilege-escalation
   rationale: The local rule adapts this control.
-  description: Containers set allowPrivilegeEscalation to false, so a process cannot gain
-    more privileges than its parent.
-  evidence_boundary: A pass shows that scanned containers block privilege escalation. It does
+  description: Regular containers set allowPrivilegeEscalation to false, so a process cannot
+    gain more privileges than its parent.
+  evidence_boundary: A pass shows that every regular container in the scanned workloads sets
+    allowPrivilegeEscalation to false. Init and ephemeral containers are not checked. It does
     not show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
     and it does not assess the Kubernetes control plane, node runtime configuration or the
     administrative interfaces used to manage the isolation mechanism.
@@ -62,14 +63,17 @@ controls:
   related_checks:
   - ism-network-policy-coverage
   rationale: The local rule adapts this control and requires both ingress and egress policy.
-    The upstream rule passes a pod selected by a policy for either direction, and its NetworkPolicy
-    matching ignores matchExpressions.
-  description: Every pod is selected by a network policy that restricts its ingress or egress
-    traffic. Pods that no policy selects are reported.
+    The upstream rule passes a pod selected by a policy for either direction, does not read
+    the policy's rules, so an allow-all policy passes, and its NetworkPolicy matching ignores
+    matchExpressions.
+  description: Every pod is selected by a network policy that declares ingress or egress.
+    Pods that no policy selects are reported. The check does not assess which traffic the
+    policy allows.
   evidence_boundary: A pass shows that each scanned pod is selected by at least one NetworkPolicy,
-    CiliumNetworkPolicy or CiliumClusterwideNetworkPolicy that restricts ingress or egress.
-    A policy for one direction is enough to pass, so a pass does not show that both directions
-    are restricted. NetworkPolicy matching uses matchLabels and ignores matchExpressions,
+    CiliumNetworkPolicy or CiliumClusterwideNetworkPolicy that declares ingress or egress.
+    It shows that a policy is present and which direction it declares, not that traffic is
+    restricted. The policy's rules are not assessed, so a policy that allows all traffic in
+    both directions passes. A policy for one direction is enough to pass. NetworkPolicy matching uses matchLabels and ignores matchExpressions,
     so a policy can be counted for a pod it does not select. It does not show that the allowed
     flows match business need, that the cluster network plugin enforces the policies, or that
     host firewalls and an organisation-approved list of applications and services exist.
@@ -109,10 +113,10 @@ controls:
   related_checks:
   - ism-no-host-access
   rationale: One of the four upstream host-isolation controls that the local rule combines.
-  description: Containers do not bind ports on the node, so workloads are reached through
-    Services rather than directly on the host.
-  evidence_boundary: A pass shows that scanned containers declare no hostPort. It does not
-    show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
+  description: Regular containers do not bind ports on the node, so workloads are reached
+    through Services rather than directly on the host.
+  evidence_boundary: A pass shows that no regular container in the scanned workloads declares
+    a hostPort. Init and ephemeral containers are not checked. It does not show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
     and it does not assess the Kubernetes control plane, node runtime configuration or the
     administrative interfaces used to manage the isolation mechanism.
 - control_id: C-0046
