@@ -1,0 +1,26 @@
+# Local commit gates. Install once per clone:
+#   python3 -m pip install pre-commit && pre-commit install
+# CI runs TruffleHog on every push and pull request (.github/workflows/secret-scan.yaml)
+# in case these hooks are skipped.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e # v8.30.1
+    hooks:
+      # Scans staged changes offline, including secrets it cannot verify.
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      # Provider assessment packs, joined matrices and planning notes stay private.
+      # .gitignore already excludes these paths; this also stops `git add -f`.
+      - id: block-private-material
+        name: Block private assessment material
+        language: fail
+        entry: private material must not be committed; keep it under .private/ or outside the repository
+        files: '(^|/)(\.private|\.orca|docs/private)/|\.(xlsx|xls|docx|pptx|pdf)$|kubeconfig|talosconfig'

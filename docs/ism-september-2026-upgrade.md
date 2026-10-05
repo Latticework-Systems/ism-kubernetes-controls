@@ -39,6 +39,10 @@ These relationships use upstream controls at the `kubescape_regolibrary_framewor
 - C-0189 → ISM-2143: it checks the same default service-account properties as the Kyverno policies mapped to ISM-2143.
 - C-0210 replaces C-0055 for seccomp, because C-0055 now accepts any profile, including `Unconfined`.
 
+## Coverage census
+
+[`mapping/coverage.yaml`](../mapping/coverage.yaml) moves to September 2026. Twenty-two census titles take ASD's revised wording, mostly the "human users" and "security controls" amendments. ISM-0445 moves from `automated` to `external-api` with an identity-provider collector, because its detectors now support ISM-2143. ISM-2128, ISM-2141 and ISM-2143 join the census as `automated` rows, so the census now covers 134 controls and its `automated` rows still equal the 23 detector-backed controls. The other September additions are not yet reviewed into the census.
+
 ## New requirements needing additional evidence
 
 Only ISM-2128, ISM-2141 and ISM-2143 gain partial mappings through existing checks. The other 41 additions have no detector mapping in this repository. Requirements particularly relevant to Kubernetes deployments include:

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latticework.systems/schema/ism-coverage-1.0.json",
+  "title": "Latticework ISM coverage census",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ism_release", "generated", "controls"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "ism_release": {"type": "string", "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"},
+    "generated": {"const": false},
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/control"}
+    }
+  },
+  "$defs": {
+    "layer": {
+      "enum": ["workload", "cluster", "node", "aws-account", "identity", "organisation", "endpoint", "provider"]
+    },
+    "collector": {
+      "enum": ["kyverno", "kubescape", "node-inventory", "node-host", "aws-account", "identity-provider"]
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ism_id", "title", "coverage", "layers", "rationale"],
+      "properties": {
+        "ism_id": {"type": "string", "pattern": "^ISM-[0-9]{4}$"},
+        "title": {"type": "string", "minLength": 1},
+        "coverage": {
+          "enum": ["automated", "buildable", "external-api", "document", "provider-report", "outside-platform"]
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/layer"}
+        },
+        "collectors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/collector"}
+        },
+        "rationale": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"coverage": {"enum": ["document", "provider-report", "outside-platform", "automated"]}}},
+          "then": {"not": {"required": ["collectors"]}}
+        }
+      ]
+    }
+  }
+}
