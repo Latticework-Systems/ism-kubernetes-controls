@@ -34,10 +34,15 @@ controls:
   - ism-no-privilege-escalation
   rationale: The local rule adapts this control.
   description: Regular containers set allowPrivilegeEscalation to false, so a process cannot
-    gain more privileges than its parent.
-  evidence_boundary: A pass shows that every regular container in the scanned workloads sets
-    allowPrivilegeEscalation to false. Init and ephemeral containers are not checked. It does
-    not show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
+    gain more privileges than its parent. If the scan input contains PodSecurityPolicy objects
+    and every one sets allowPrivilegeEscalation to false, containers pass whatever their own
+    setting.
+  evidence_boundary: With no PodSecurityPolicy in the scan input, a pass shows that every regular
+    container in the scanned workloads sets allowPrivilegeEscalation to false. If the scan input
+    contains one or more PodSecurityPolicy objects and every one sets spec.allowPrivilegeEscalation
+    to false, the rule also passes regular containers that set the field to true or omit it, so
+    a pass then reflects only the PodSecurityPolicy setting. Init and ephemeral containers are
+    not checked. It does not show that all ASD and vendor hardening guidance was identified, reconciled or implemented,
     and it does not assess the Kubernetes control plane, node runtime configuration or the
     administrative interfaces used to manage the isolation mechanism.
 - control_id: C-0017
