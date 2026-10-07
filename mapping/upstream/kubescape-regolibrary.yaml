@@ -134,9 +134,9 @@ controls:
   - ISM-2128
   related_checks:
   - ism-drop-all-capabilities
-  rationale: The local rule requires dropping ALL capabilities. The upstream rule instead
-    rejects added capabilities on the insecureCapabilities list, whose default includes SYS_MODULE,
-    so it also gives ISM-2128 evidence that the local rule does not.
+  rationale: The local rule requires dropping ALL and rejects every capability added back
+    except NET_BIND_SERVICE, so it detects SYS_MODULE as well as the upstream
+    insecureCapabilities check. The upstream list remains configurable.
   description: Containers do not add Linux capabilities from the configured list of insecure
     capabilities (insecureCapabilities). The default list includes SYS_MODULE, which allows
     loading kernel modules.
@@ -243,10 +243,11 @@ controls:
   ism_ids:
   - ISM-2143
   related_checks:
+  - ism-default-service-accounts
   - ism-privileged-access-mutate-default-sa
   - ism-privileged-access-require-dedicated-sa
-  rationale: Checks the same default service-account properties as the Kyverno policies mapped
-    to ISM-2143.
+  rationale: The upstream rules and local Kubescape/Kyverno checks cover default-account token
+    automount and dedicated service-account configuration for ISM-2143.
   description: Each namespace has a service account other than default, and the default service
     account does not mount its token into pods by default, so workloads are steered away from
     a shared namespace credential.
