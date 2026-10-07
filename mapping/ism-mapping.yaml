@@ -119,8 +119,8 @@ controls:
             control_id: C-0046
             rule_name: insecure-capabilities
           rationale: >-
-            The local rule uses the upstream capability model but requires every
-            regular and init container to drop ALL capabilities.
+            The local rule requires every regular and init container to drop ALL
+            capabilities and allows only NET_BIND_SERVICE to be added back.
       - engine: kubescape
         rule_id: ism-seccomp-profile
         coverage: partial
@@ -551,11 +551,25 @@ controls:
           rationale: >-
             The local rule follows the upstream privileged and SYS_ADMIN semantics
             while remaining a standalone implementation with explicit local fixtures.
+      - engine: kubescape
+        rule_id: ism-drop-all-capabilities
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0046
+            rule_name: insecure-capabilities
+          rationale: >-
+            The local rule requires drop ALL and rejects every capability added back
+            except NET_BIND_SERVICE, including SYS_MODULE.
     evidence_note: >-
-      Findings show whether workloads run privileged, which grants the capability to
-      load kernel modules, or add SYS_ADMIN; they do not detect other added
-      capabilities such as SYS_MODULE, and do not assess node access, driver signing
-      or which privileged users can modify kernel-mode code.
+      Findings show whether workloads run privileged or add SYS_ADMIN, and whether
+      regular or init containers add capabilities back after dropping ALL other than
+      NET_BIND_SERVICE. The added-capability check does not cover ephemeral containers;
+      these findings do not assess node access, driver signing or which privileged users
+      can modify kernel-mode code.
 
   - ism_id: ISM-2141
     title: Applications and workloads use short-lived dynamically issued credentials in preference to long-lived static credentials.
@@ -586,6 +600,19 @@ controls:
         chapter: null
         principle: null
     checks:
+      - engine: kubescape
+        rule_id: ism-default-service-accounts
+        coverage: partial
+        provenance:
+          disposition: adapt
+          upstream:
+            repository: https://github.com/kubescape/regolibrary
+            ref: 01f57decc4a771facfb7166f02af986ccb560203
+            control_id: C-0189
+            rule_name: automount-default-service-account
+          rationale: >-
+            The local detector combines C-0189's checks for default-account token
+            automount and a dedicated non-default ServiceAccount in each scanned namespace.
       - engine: kyverno
         policy: ism-privileged-access-mutate-default-sa
         coverage: partial
@@ -593,10 +620,12 @@ controls:
         policy: ism-privileged-access-require-dedicated-sa
         coverage: partial
     evidence_note: >-
-      PolicyReports show whether production Pods avoid the default service account;
-      the optional mutation disables token automount on default ServiceAccounts.
-      These checks do not prove that non-default accounts or credentials are unique
-      per workload or environment, or that applications do not share other secrets.
+      Kubescape findings show that scanned namespaces include a non-default
+      ServiceAccount and that the default ServiceAccount disables token automount.
+      Kyverno PolicyReports provide admission-time evidence for the corresponding
+      policies. Neither proves that each workload uses its own account or that
+      credentials are unique across workloads and environments, or says anything
+      about credentials held outside Kubernetes service accounts.
 
 unmapped:
   - engine: kubescape
