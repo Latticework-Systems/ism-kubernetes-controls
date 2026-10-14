@@ -54,7 +54,7 @@ readme: |
   - **ISM-1685**: PolicyReports show legacy long-lived service-account token Secrets; they do not assess external secret stores, break-glass credentials or rotation.
   - **ISM-1883**: RBAC findings show Kubernetes permission breadth and cluster-admin assignments; they do not establish which privileged human accounts require online-service access, authorisation workflow, human account lifecycle or external systems.
   - **ISM-2141**: Admission results show whether new or updated legacy service-account token Secrets are rejected or reported; background scanning is disabled. They do not prove existing tokens are removed, projected tokens are used, token lifetimes are short, or application and external credentials are dynamic.
-  - **ISM-2143**: PolicyReports show whether production Pods avoid the default service account; the optional mutation disables token automount on default ServiceAccounts. These checks do not prove that non-default accounts or credentials are unique per workload or environment, or that applications do not share other secrets.
+  - **ISM-2143**: Kubescape findings show that scanned namespaces include a non-default ServiceAccount and that the default ServiceAccount disables token automount. Kyverno PolicyReports provide admission-time evidence for the corresponding policies. Neither proves that each workload uses its own account or that credentials are unique across workloads and environments, or says anything about credentials held outside Kubernetes service accounts.
 
   ## Policies in this package
 

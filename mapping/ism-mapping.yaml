@@ -29,6 +29,12 @@ controls:
       Findings show whether Kubernetes workloads are selected by ingress and egress
       NetworkPolicies; they do not prove that allowed flows match business need or
       that the cluster network plugin enforces the policies.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1246
     title: Server applications are hardened using ASD and vendor hardening guidance, with the most restrictive guidance taking precedence when conflicts occur.
@@ -149,6 +155,12 @@ controls:
     evidence_note: >-
       Findings show selected Kubernetes workload hardening settings; they do not prove
       that all ASD and vendor guidance was identified, reconciled or implemented.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1416
     title: A software firewall is implemented on workstations and servers to restrict inbound and outbound network connections to an organisation-approved set of applications and services.
@@ -164,6 +176,12 @@ controls:
       NetworkPolicy coverage is evidence of workload-level traffic restriction only;
       it does not prove host firewall coverage, approved application and service lists,
       or effective enforcement by the cluster network plugin.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1490
     title: Application control is implemented on internet-facing servers.
@@ -223,6 +241,12 @@ controls:
     evidence_note: >-
       Scan and PolicyReport results show workload image and execution guardrails on
       Kubernetes servers; they do not prove host or endpoint application control.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1501
     title: Operating systems that are no longer supported by vendors are replaced.
@@ -245,6 +269,12 @@ controls:
     evidence_note: >-
       PolicyReports show declared container base-image support state; they do not
       prove Kubernetes node operating systems are supported or patched.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1511
     title: Backups of data, applications and settings are performed and retained in accordance with business criticality and business continuity requirements.
@@ -264,6 +294,12 @@ controls:
     evidence_note: >-
       PolicyReports show whether production PVCs declare backup coverage; they do
       not prove backup completion, retention, resilience or restorability.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1604
     title: When using a software-based isolation mechanism that consumes shared physical computing resources, the configuration of the isolation mechanism is hardened by removing unneeded functionality and restricting access to the administrative interface used to manage the isolation mechanism.
@@ -279,6 +315,12 @@ controls:
       Findings show selected container isolation and workload hardening settings; they
       do not assess the Kubernetes control plane, node runtime configuration or every
       administrative interface used to manage the isolation mechanism.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1657
     title: Application control restricts the execution of executables, libraries, scripts, installers, compiled HTML, HTML applications and control panel applets to an organisation-approved set.
@@ -295,6 +337,12 @@ controls:
     evidence_note: >-
       Approved-image and workload-execution findings evidence the Kubernetes
       translation of application control; they do not inspect binaries inside images.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1685
     title: Credentials for break glass accounts, local administrator accounts and service accounts are long, unique, unpredictable and managed.
@@ -314,6 +362,12 @@ controls:
     evidence_note: >-
       PolicyReports show legacy long-lived service-account token Secrets; they do
       not assess external secret stores, break-glass credentials or rotation.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1690
     title: Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.
@@ -336,6 +390,12 @@ controls:
     evidence_note: >-
       PolicyReports show declared image build age at admission; they do not prove
       the image includes every applicable vendor patch.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1693
     title: Patches, updates or other vendor mitigations for vulnerabilities in applications other than office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products are applied within one month of release.
@@ -352,6 +412,12 @@ controls:
     evidence_note: >-
       PolicyReports show declared image build age at admission; they do not prove
       dependency-level remediation or the vendor release date.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1694
     title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.
@@ -368,6 +434,12 @@ controls:
     evidence_note: >-
       PolicyReports show declared container base-image support metadata; they do not
       prove patch timing for node operating systems or network devices.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1695
     title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of workstations, non-internet-facing servers and non-internet-facing network devices are applied within one month of release.
@@ -384,6 +456,12 @@ controls:
     evidence_note: >-
       PolicyReports show declared container base-image support metadata; they do not
       prove patch timing for node operating systems, workstations or network devices.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1698
     title: A vulnerability scanner is used at least daily to identify missing patches or updates for vulnerabilities in online services.
@@ -403,6 +481,12 @@ controls:
     evidence_note: >-
       PolicyReports show a declared successful image scan at admission; they do not
       prove scanner cadence, coverage or current vulnerability data.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1700
     title: A vulnerability scanner is used at least fortnightly to identify missing patches or updates for vulnerabilities in applications other than office productivity suites, web browsers and their extensions, email clients, PDF applications, and security products.
@@ -419,6 +503,12 @@ controls:
     evidence_note: >-
       PolicyReports show a declared successful image scan at admission; they do not
       prove fortnightly cadence or dependency-level scan coverage.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1808
     title: A vulnerability scanner with an up-to-date vulnerability database is used for vulnerability scanning activities.
@@ -435,6 +525,12 @@ controls:
     evidence_note: >-
       PolicyReports show only the workload's declared scan result; scanner identity,
       database freshness and scan configuration require pipeline evidence.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1871
     title: Application control is applied to all locations other than user profiles and temporary folders used by operating systems, web browsers and email clients.
@@ -451,6 +547,12 @@ controls:
     evidence_note: >-
       Cluster-wide workload findings show whether the Kubernetes translation is
       applied across scanned namespaces; they do not assess host filesystem locations.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1876
     title: Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.
@@ -470,6 +572,12 @@ controls:
     evidence_note: >-
       Admission-time image age is supporting evidence only; criticality, exploit
       status and the 48-hour remediation clock require vulnerability pipeline data.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1877
     title: Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.
@@ -486,6 +594,12 @@ controls:
     evidence_note: >-
       Container base-image support metadata is supporting evidence only; criticality,
       exploit status and node or network-device patch timing remain external.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-1883
     title: Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users to undertake their duties or functions.
@@ -527,6 +641,12 @@ controls:
       RBAC findings show Kubernetes permission breadth and cluster-admin assignments;
       they do not establish which privileged human accounts require online-service
       access, authorisation workflow, human account lifecycle or external systems.
+    responsibility:
+      eks: customer-platform
+      self-managed: customer-platform
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-2128
     title: The ability to install, load or modify kernel-mode code, including drivers, kernel modules and extensions, is limited to privileged users who require such abilities as part of their duties or functions.
@@ -570,6 +690,12 @@ controls:
       NET_BIND_SERVICE. The added-capability check does not cover ephemeral containers;
       these findings do not assess node access, driver signing or which privileged users
       can modify kernel-mode code.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-2141
     title: Applications and workloads use short-lived dynamically issued credentials in preference to long-lived static credentials.
@@ -589,6 +715,12 @@ controls:
       Secrets are rejected or reported; background scanning is disabled. They do
       not prove existing tokens are removed, projected tokens are used, token
       lifetimes are short, or application and external credentials are dynamic.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
   - ism_id: ISM-2143
     title: Applications and workloads use unique credentials that are not shared with other applications or workloads, or across development, testing, staging and production environments.
@@ -626,6 +758,12 @@ controls:
       policies. Neither proves that each workload uses its own account or that
       credentials are unique across workloads and environments, or says anything
       about credentials held outside Kubernetes service accounts.
+    responsibility:
+      eks: customer-workload
+      self-managed: customer-workload
+      source: provisional
+      notes: Provisional allocation for the detector evidence only. No provider inheritance or whole-control ownership
+        is established until an authorised CSCM and the engagement boundary are reviewed.
 
 unmapped:
   - engine: kubescape

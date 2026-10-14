@@ -23,4 +23,4 @@ repos:
         name: Block private assessment material
         language: fail
         entry: private material must not be committed; keep it under .private/ or outside the repository
-        files: '(^|/)(\.private|\.orca|docs/private)/|\.(xlsx|xls|docx|pptx|pdf)$|kubeconfig|talosconfig'
+        files: '^AGENTS\.md$|(^|/)(\.private|\.orca|docs/private)/|\.(xlsx|xls|docx|pptx|pdf)$|kubeconfig|talosconfig'

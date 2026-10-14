@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://latticework.systems/schema/responsibility-2.0.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eks",
+    "self-managed",
+    "source",
+    "notes"
+  ],
+  "properties": {
+    "eks": {
+      "enum": [
+        "csp-inherited",
+        "shared",
+        "customer-platform",
+        "customer-workload",
+        "not-kubernetes-observable"
+      ]
+    },
+    "self-managed": {
+      "enum": [
+        "csp-inherited",
+        "shared",
+        "customer-platform",
+        "customer-workload",
+        "not-kubernetes-observable"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_outside_cluster": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

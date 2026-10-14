@@ -93,8 +93,16 @@ test: install-kyverno
 mapping-generate:
 	python3 scripts/generate_views.py
 
+ASD_CATALOG ?= .tools/ISM_catalog.json
+
+# Explicit build-time acquisition; mapping-check also works with a vendored path offline.
+mapping-authority:
+	@mkdir -p $(dir $(ASD_CATALOG))
+	@url="$$(python3 -c 'import yaml; print(yaml.safe_load(open("mapping/provenance.lock.yaml"))["sources"]["asd_ism_catalog"]["url"])')"; curl -fsSL "$$url" -o "$(ASD_CATALOG)"
+
 mapping-check:
-	python3 scripts/validate_mapping.py
+	python3 scripts/validate_mapping.py --asd-catalog "$(ASD_CATALOG)"
+	python3 tests/test_mvp_mapping.py
 	python3 scripts/generate_views.py --check
 
 ## Regenerate the Artifact Hub package tree from policies/ and the canonical mapping.
