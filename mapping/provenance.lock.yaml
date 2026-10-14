@@ -3,7 +3,7 @@ sources:
   asd_ism_catalog:
     authority: Australian Signals Directorate
     version: "2026.09.4"
-    url: https://www.cyber.gov.au/ism/oscal/v2026.09.4/artifacts/ISM_catalog.json
+    url: https://raw.githubusercontent.com/AustralianCyberSecurityCentre/ism-oscal/v2026.09.4/ISM_catalog.json
     sha256: 237ea09362b8449ed5c5ee85de4725a0468ee73d13af7cf61c26d4e6ac47f12d
   asd_e8_ml2_profile:
     authority: Australian Signals Directorate

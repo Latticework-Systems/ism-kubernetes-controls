@@ -125,6 +125,10 @@ The first wave omits `patch-applications`, `patch-operating-systems` and `backup
 
 Kubernetes provides technical evidence for part of the ISM. These checks cannot establish governance, assessor judgement, endpoint configuration, identity-provider configuration, patch release dates, scanner cadence, backup completion or formal compliance.
 
+Inherited controls need a cited provider source and are reported as `inherited`, never as detector passes. Platform responsibility labels in the canonical mapping are provisional until the relevant provider matrix and engagement boundary are reviewed.
+
+The public [evidence record contract](./schemas/evidence-record.v2.json) defines bounded technical observations and unassessed collected records. Collection, polling, signing, storage and OSCAL export are outside this repository's scope.
+
 Use the exact `evidence_note` attached to each mapping when presenting a result. A passing check means only that the scanned object satisfied that detector at that time.
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for commit hooks, local validation, provenance review and Kubescape mapping releases.

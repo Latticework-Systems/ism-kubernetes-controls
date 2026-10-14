@@ -20,3 +20,4 @@ __pycache__/
 # Private material: provider assessment packs, joined matrices, planning notes. Never commit.
 .private/
 docs/private/
+/AGENTS.md

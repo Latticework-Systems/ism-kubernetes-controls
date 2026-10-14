@@ -74,7 +74,7 @@ jobs:
         if: steps.version.outputs.tag
         run: |
           pip install -r requirements-dev.txt
-          make mapping-check
+          make mapping-authority mapping-check
 
       - name: Push tag
         if: steps.version.outputs.tag

@@ -19,7 +19,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - run: make mapping-check
+      - run: make mapping-authority mapping-check
       - name: Prove deterministic generation
         run: |
           python scripts/generate_views.py --output /tmp/e8-first.yaml --kubescape-output /tmp/kubescape-first.json --regolibrary-output /tmp/regolibrary-first.json --coverage-output /tmp/coverage-first.md

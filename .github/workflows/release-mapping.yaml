@@ -31,7 +31,7 @@ jobs:
       - name: Validate mapping
         run: |
           pip install -r requirements-dev.txt
-          make mapping-check
+          make mapping-authority mapping-check
 
       - name: Stage release assets
         run: |

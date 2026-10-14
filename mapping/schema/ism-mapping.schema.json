@@ -107,7 +107,7 @@
     "control": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ism_id", "title", "ism_topic", "applicability", "views", "checks", "evidence_note"],
+      "required": ["ism_id", "title", "ism_topic", "applicability", "views", "checks", "evidence_note", "responsibility"],
       "properties": {
         "ism_id": {"type": "string", "pattern": "^ISM-[0-9]{4}$"},
         "title": {"type": "string", "minLength": 1},
@@ -119,7 +119,54 @@
           "minItems": 1,
           "items": {"$ref": "#/$defs/check"}
         },
+        "responsibility": {"$ref": "#/$defs/responsibility"},
         "evidence_note": {"type": "string", "minLength": 1}
+      }
+    },
+    "responsibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eks",
+        "self-managed",
+        "source",
+        "notes"
+      ],
+      "properties": {
+        "eks": {
+          "enum": [
+            "csp-inherited",
+            "shared",
+            "customer-platform",
+            "customer-workload",
+            "not-kubernetes-observable"
+          ]
+        },
+        "self-managed": {
+          "enum": [
+            "csp-inherited",
+            "shared",
+            "customer-platform",
+            "customer-workload",
+            "not-kubernetes-observable"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_outside_cluster": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "unmapped": {
