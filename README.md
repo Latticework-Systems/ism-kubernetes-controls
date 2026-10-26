@@ -133,4 +133,4 @@ Use the exact `evidence_note` attached to each mapping when presenting a result.
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for commit hooks, local validation, provenance review and Kubescape mapping releases.
 
-Licensed under Apache-2.0. Report security issues using [`SECURITY.md`](./SECURITY.md).
+Original work is licensed under Apache-2.0. ASD's ISM control wording quoted in this repository stays under CC BY 4.0, with attribution in [`NOTICE`](./NOTICE). Report security issues using [`SECURITY.md`](./SECURITY.md).
