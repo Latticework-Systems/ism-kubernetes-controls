@@ -1,0 +1,34 @@
+ism-kubernetes-controls
+Copyright Latticework Systems
+
+Original work in this repository is licensed under the Apache License,
+Version 2.0 (see LICENSE). That covers the mapping of detector checks to
+ISM controls, the evidence notes, the responsibility allocations, the
+policies and the tooling written by Latticework Systems.
+
+The Apache License does not apply to the third-party material below, which
+keeps its own licence.
+
+1. Australian Government Information Security Manual (ISM) control wording
+
+   Australian Signals Directorate, (c) Commonwealth of Australia 2026.
+   Licensed under Creative Commons Attribution 4.0 International
+   (https://creativecommons.org/licenses/by/4.0/), subject to the source
+   conditions and exclusions at https://www.cyber.gov.au/copyright.
+
+   Where it appears: ISM control statements are reproduced from the ISM
+   OSCAL release
+   (https://www.cyber.gov.au/ism/oscal/v2026.09.4/artifacts/ISM_catalog.json)
+   in mapping/ism-mapping.yaml (the `title` fields), mapping/coverage.yaml,
+   the generated files in mapping/views/ and the Artifact Hub package
+   metadata in artifacthub/.
+   Changes: none to the wording; layout and formatting are adapted.
+   This repository is independent and is not endorsed by ASD. No ASD logo
+   or Commonwealth Coat of Arms is used.
+
+2. Kubescape regolibrary
+
+   Some checks adapt rules from https://github.com/kubescape/regolibrary,
+   licensed under the Apache License, Version 2.0. The `provenance` block
+   on each check records the upstream repository, revision, rule and the
+   adaptation made.
